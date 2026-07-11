@@ -51,3 +51,25 @@ dev/desktop/app/data-dev/
   backups/
   exports/
 ```
+
+## 正式版目录
+
+正式版使用 production 配置，数据放在 exe 同级浅层目录：
+
+```text
+正式版/
+  打开桌面端.exe
+  数据/
+    samples.db
+    images/
+  数据包/
+    手机导出给电脑/
+    电脑导出给手机/
+  数据备份/
+```
+
+电脑端导出的同步包默认进入：
+
+```text
+正式版/数据包/电脑导出给手机/
+```

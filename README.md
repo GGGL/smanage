@@ -1,48 +1,72 @@
 # 样品采集管理项目
 
-当前目录已经按用途分开：
+个人使用的样品采集与管理工具。手机端负责现场拍照录入，电脑端负责按项目整理、修改、导入导出同步包。
+
+## 当前状态
+
+- 手机端：纯 Web 应用原型已可用，位于 `dev/mobile/`。
+- 电脑端：Python 本地 Web 管理程序已可用，位于 `dev/desktop/`。
+- 正式版电脑端 exe：已生成，位于 `release/正式版/打开桌面端.exe`。
+- 正式版 APK：未生成，原因是当前电脑没有 JDK、Android SDK、Gradle/Android 打包环境。
+- 数据同步：通过 zip 包双向同步，已实现手机导出、手机导入确认、电脑导入、电脑导出。
+
+## 目录结构
 
 ```text
 smanage/
-  dev/                 开发区：源码、设计稿、技术文档
-  release/正式版/       正式交付区：最终可运行的桌面端 exe 和手机端 apk
+  dev/
+    mobile/              手机端源码和本地预览文件
+    desktop/             电脑端源码
+    docs/                技术文档和设计稿
+  release/
+    正式版/
+      打开桌面端.exe
+      数据包/
+        手机导出给电脑/
+        电脑导出给手机/
+      数据备份/
 ```
 
-## 开发区
+## 开发运行
+
+电脑端：
+
+```powershell
+python dev\desktop\run.py --no-browser
+```
+
+默认访问：
 
 ```text
-dev/
-  mobile/              手机端开发源码
-  desktop/             电脑端开发源码
-  docs/
-    设计稿/             SVG 原型和设计稿
-    技术开发文档/        业务流程、技术栈、交互说明
+http://127.0.0.1:8765/
 ```
 
-电脑端开发运行：
+手机端预览：
 
 ```powershell
-python dev\desktop\run.py
-```
-
-手机端开发预览：
-
-```powershell
+cd dev\mobile
 python -m http.server 5175
 ```
 
-在 `dev/mobile` 目录下启动后访问：
+访问：
 
 ```text
 http://127.0.0.1:5175/
 ```
 
-## 正式版区
+## 正式版说明
+
+正式版电脑端 exe 默认是 production 环境。双击 `release/正式版/打开桌面端.exe` 后，会在同级创建/使用：
 
 ```text
-release/正式版/
-  桌面端/              放最终的一键打开桌面端 exe
-  手机端/              放最终的手机端 apk
+数据/
+数据包/
+数据备份/
 ```
 
-注意：正式版文件夹只放最终可运行交付物，不放开发源码和测试数据。
+如果端口 `8765` 被占用，电脑端会自动使用 `8766` 等后续端口。
+
+## 交接文件
+
+- `TODO.md`：下一步待办。
+- `SESSION_SUMMARY.md`：给下一台电脑上的 Codex 读取的完整交接摘要。

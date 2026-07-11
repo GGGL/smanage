@@ -5,6 +5,7 @@ import mimetypes
 import os
 import html
 import shutil
+import socket
 import sqlite3
 import sys
 import threading
@@ -16,17 +17,35 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
-ROOT = Path(__file__).resolve().parent
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
+ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 STATIC_DIR = ROOT / "static"
-APP_ENV = os.environ.get("SMANAGE_ENV", "dev").strip() or "dev"
+DEFAULT_ENV = "production" if getattr(sys, "frozen", False) else "dev"
+APP_ENV = os.environ.get("SMANAGE_ENV", DEFAULT_ENV).strip() or DEFAULT_ENV
 APP_NAME = "样品管理 Dev" if APP_ENV == "dev" else "样品管理"
-DATA_DIR = ROOT / ("data-dev" if APP_ENV == "dev" else "data")
+if getattr(sys, "frozen", False):
+    RUNTIME_DIR = Path(sys.executable).resolve().parent
+else:
+    RUNTIME_DIR = ROOT
+
+if APP_ENV == "dev":
+    DATA_DIR = ROOT / "data-dev"
+    BACKUP_DIR = DATA_DIR / "backups"
+    EXPORT_DIR = DATA_DIR / "exports"
+else:
+    DATA_DIR = RUNTIME_DIR / "数据"
+    BACKUP_DIR = RUNTIME_DIR / "数据备份"
+    EXPORT_DIR = RUNTIME_DIR / "数据包" / "电脑导出给手机"
+
+IMPORT_DIR = RUNTIME_DIR / "数据包" / "手机导出给电脑"
 DB_PATH = DATA_DIR / "samples.db"
 IMAGE_DIR = DATA_DIR / "images"
-BACKUP_DIR = DATA_DIR / "backups"
-EXPORT_DIR = DATA_DIR / "exports"
 HOST = "127.0.0.1"
-PORT = 8765
+PREFERRED_PORT = int(os.environ.get("SMANAGE_PORT", "8765"))
 
 
 def utc_now() -> str:
@@ -34,7 +53,7 @@ def utc_now() -> str:
 
 
 def ensure_dirs() -> None:
-    for path in (DATA_DIR, IMAGE_DIR, BACKUP_DIR, EXPORT_DIR):
+    for path in (DATA_DIR, IMAGE_DIR, BACKUP_DIR, EXPORT_DIR, IMPORT_DIR):
         path.mkdir(parents=True, exist_ok=True)
 
 
@@ -624,10 +643,22 @@ def sync_logs() -> list[dict]:
     return [dict(row) for row in rows]
 
 
+def choose_port(start: int) -> int:
+    for port in range(start, start + 20):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            try:
+                probe.bind((HOST, port))
+                return port
+            except OSError:
+                continue
+    raise OSError(f"没有可用端口：{start}-{start + 19}")
+
+
 def main() -> None:
     init_db()
-    server = ThreadingHTTPServer((HOST, PORT), Handler)
-    url = f"http://{HOST}:{PORT}/"
+    port = choose_port(PREFERRED_PORT)
+    server = ThreadingHTTPServer((HOST, port), Handler)
+    url = f"http://{HOST}:{port}/"
     if "--no-browser" not in sys.argv:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     print(f"{APP_NAME} 已启动: {url}")

@@ -150,16 +150,52 @@ function projectsPage() {
 
 function projectPage() {
   const p = state.project;
-  const rows = state.samples.length ? state.samples.map((sample) => `
-    <button class="card sample-row" data-sample="${sample.id}">
-      <div class="thumb">${sample.photoUrl ? `<img src="${sample.photoUrl}" alt="" />` : ""}</div>
-      <div>
-        <strong>${escapeHtml(sample.name)}</strong>
-        <div class="meta">${escapeHtml(sample.spec || "未填规格")} · ${escapeHtml(sample.origin || "未填产地")} · ${escapeHtml(sample.price || "-")}</div>
+  const rows = state.samples.length ? `
+    <section class="card sample-table">
+      <div class="sample-table-row sample-table-head">
+        <label class="check-cell">
+          <input id="check-pending-all" type="checkbox" />
+          <span>待确认</span>
+        </label>
+        <span>图片</span>
+        <span>图片名称</span>
+        <span>规格</span>
+        <span>产地</span>
+        <span>价格</span>
+        <span>状态</span>
+        <div class="table-actions">
+          <button class="link-btn strong" id="confirm-selected" type="button">确认选中</button>
+        </div>
       </div>
-      <span class="status">${escapeHtml(sample.status || "待确认")}</span>
-    </button>
-  `).join("") : `<div class="card empty">当前项目还没有样品</div>`;
+      ${state.samples.map((sample) => {
+        const status = sample.status || "待确认";
+        const isPending = status === "待确认";
+        return `
+          <div class="sample-table-row">
+            <label class="check-cell">
+              <input class="pending-check" type="checkbox" value="${sample.id}" ${isPending ? "" : "disabled"} />
+            </label>
+            <button class="thumb table-thumb" data-sample="${sample.id}" type="button">
+              ${sample.photoUrl ? `<img src="${sample.photoUrl}" alt="" />` : ""}
+            </button>
+            <button class="name-cell" data-sample="${sample.id}" type="button">
+              <strong>${escapeHtml(sample.name)}</strong>
+              <span>${escapeHtml(sample.remark || "")}</span>
+            </button>
+            <span>${escapeHtml(sample.spec || "-")}</span>
+            <span>${escapeHtml(sample.origin || "-")}</span>
+            <span>${escapeHtml(String(sample.price || "-"))}</span>
+            <span class="status ${status === "已确认" ? "ok" : ""}">${escapeHtml(status)}</span>
+            <div class="table-actions">
+              <button class="link-btn" data-sample="${sample.id}" type="button">查看</button>
+              <button class="link-btn" data-sample="${sample.id}" type="button">修改</button>
+              ${isPending ? `<button class="link-btn strong" data-confirm-sample="${sample.id}" type="button">确认</button>` : ""}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </section>
+  ` : `<div class="card empty">当前项目还没有样品</div>`;
   return layout(`
     <header class="page-head">
       <div>
@@ -174,7 +210,7 @@ function projectPage() {
         <button class="btn" id="export-package">导出同步包</button>
       </div>
     </header>
-    <section class="sample-list">${rows}</section>
+    ${rows}
   `);
 }
 
@@ -257,6 +293,26 @@ function bind() {
   app.querySelectorAll("[data-sample]").forEach((button) => {
     button.addEventListener("click", () => showSample(button.dataset.sample));
   });
+  app.querySelectorAll("[data-confirm-sample]").forEach((button) => {
+    button.addEventListener("click", () => confirmSamples([button.dataset.confirmSample]));
+  });
+
+  const checkPendingAll = app.querySelector("#check-pending-all");
+  if (checkPendingAll) {
+    checkPendingAll.addEventListener("change", () => {
+      app.querySelectorAll(".pending-check:not(:disabled)").forEach((box) => {
+        box.checked = checkPendingAll.checked;
+      });
+    });
+  }
+
+  const confirmSelected = app.querySelector("#confirm-selected");
+  if (confirmSelected) {
+    confirmSelected.addEventListener("click", () => {
+      const ids = Array.from(app.querySelectorAll(".pending-check:checked")).map((box) => box.value);
+      confirmSamples(ids);
+    });
+  }
   app.querySelectorAll("[data-action='back-projects']").forEach((button) => button.addEventListener("click", showProjects));
   app.querySelectorAll("[data-action='back-project']").forEach((button) => button.addEventListener("click", () => showProject(state.sample.projectId)));
 
@@ -321,6 +377,22 @@ async function saveSample(event) {
   });
   state.message = "样品内容已保存";
   await showProject(state.sample.projectId);
+}
+
+async function confirmSamples(sampleIds) {
+  const ids = sampleIds.filter(Boolean);
+  if (!ids.length) {
+    state.message = "请先勾选待确认样品";
+    render();
+    return;
+  }
+  await Promise.all(ids.map((sampleId) => api(`/api/samples/${encodeURIComponent(sampleId)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ status: "已确认" }),
+  })));
+  state.message = ids.length > 1 ? `已确认 ${ids.length} 条样品` : "样品已确认";
+  await showProject(state.project.id);
 }
 
 async function saveProject(event) {

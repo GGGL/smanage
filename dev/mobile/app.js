@@ -11,7 +11,10 @@
     projects: [],
     samples: [],
     lastSavedSample: null,
+    exportFile: null,
+    importFile: null,
     message: "",
+    messageType: "success",
   };
 
   const dbApi = {
@@ -79,6 +82,7 @@
   function go(name, params = {}) {
     state.route = { name, ...params };
     state.message = "";
+    state.messageType = "success";
     render();
   }
 
@@ -117,7 +121,7 @@
             <p class="subtitle">${subtitle || ""}</p>
           </div>
         </header>
-        ${state.message ? `<div class="success">${escapeHtml(state.message)}</div>` : ""}
+        ${state.message ? `<div class="message ${state.messageType === "error" ? "error" : state.messageType === "info" ? "info" : "success"}">${escapeHtml(state.message)}</div>` : ""}
         ${body}
       </main>
     `;
@@ -151,8 +155,9 @@
 
   function entryPage() {
     const projectOptions = state.projects.map((project) => (
-      `<option value="${project.id}">${escapeHtml(project.name)}</option>`
+      `<option value="${project.id}" ${state.route.projectId === project.id ? "selected" : ""}>${escapeHtml(project.name)}</option>`
     )).join("");
+    const projectSelectOptions = projectOptions || `<option value="">暂无已有项目</option>`;
     return pageShell("录入样品", "这条路径只负责新增采集", `
       <form class="form" id="entry-form">
         <label class="photo-picker" id="photo-picker">
@@ -169,7 +174,12 @@
         </div>
         <div class="grid-2">
           <div class="field"><label>价格</label><input name="price" type="number" step="0.01" placeholder="12.5" /></div>
-          <div class="field"><label>项目</label><select name="projectId">${projectOptions}</select></div>
+          <div class="field"><label>选择已有项目</label><select name="projectId">${projectSelectOptions}</select></div>
+        </div>
+        <div class="field">
+          <label>新项目名称</label>
+          <input name="newProjectName" placeholder="要新建项目时填写" autocomplete="off" />
+          <span class="field-hint">填写新项目名称时，优先创建并使用新项目；不填则使用上面的已有项目。</span>
         </div>
         <div class="field"><label>备注</label><textarea name="remark" placeholder="可不填"></textarea></div>
         <button class="btn primary" type="submit">确认</button>
@@ -193,15 +203,74 @@
     const items = state.projects.map((project) => {
       const count = state.samples.filter((sample) => sample.projectId === project.id).length;
       return `
-        <button class="card list-item" data-project="${project.id}">
-          <div class="item-main">
-            <strong>${escapeHtml(project.name)}</strong>
-            <span>${count} 条样品 · ${new Date(project.updatedAt).toLocaleString()}</span>
-          </div>
-        </button>
+        <div class="card list-item project-list-item">
+          <button class="project-open" data-project="${project.id}">
+            <div class="item-main">
+              <strong>${escapeHtml(project.name)}</strong>
+              <span>${count} 条样品 · ${new Date(project.updatedAt).toLocaleString()}</span>
+            </div>
+          </button>
+          <button class="edit-project-btn" data-edit-project="${project.id}" aria-label="调整项目名称">编辑</button>
+        </div>
       `;
     }).join("");
     return pageShell("项目列表", "点击项目进入项目详情", `<section class="list">${items}</section>`, "home");
+  }
+
+  function projectNameDialog(project) {
+    return `
+      <div class="modal-mask">
+        <form class="modal-card" id="project-name-form" data-id="${project.id}">
+          <div class="modal-head">
+            <strong>调整项目名称</strong>
+            <button type="button" class="modal-close" data-close-modal>×</button>
+          </div>
+          <div class="field">
+            <label>项目名称</label>
+            <input name="projectName" value="${escapeHtml(project.name)}" required />
+          </div>
+          <div class="actions">
+            <button class="btn" type="button" data-close-modal>取消</button>
+            <button class="btn primary" type="submit">保存</button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+
+  function showProjectNameDialog(projectId) {
+    const project = state.projects.find((item) => item.id === projectId);
+    if (!project) return;
+    document.body.insertAdjacentHTML("beforeend", projectNameDialog(project));
+    document.querySelectorAll("[data-close-modal]").forEach((el) => {
+      el.addEventListener("click", closeProjectModal);
+    });
+    document.querySelector("#project-name-form")?.addEventListener("submit", updateProjectName);
+  }
+
+  function closeProjectModal() {
+    document.querySelector(".modal-mask")?.remove();
+  }
+
+  async function updateProjectName(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const projectId = form.dataset.id;
+    const project = await dbApi.get("projects", projectId);
+    if (!project) return;
+    const nextName = String(new FormData(form).get("projectName") || "").trim();
+    if (!nextName) return;
+    await dbApi.put("projects", {
+      ...project,
+      name: nextName,
+      updatedAt: now(),
+      updatedByDevice: DEVICE,
+      version: (project.version || 1) + 1,
+    });
+    closeProjectModal();
+    await refresh();
+    state.message = "项目名称已更新";
+    render();
   }
 
   function projectDetailPage(projectId) {
@@ -214,12 +283,15 @@
           <div class="thumb">${sample.photoData ? `<img src="${sample.photoData}" alt="" />` : ""}</div>
           <div class="item-main">
             <strong>${escapeHtml(sample.name)}</strong>
-            <span>${escapeHtml(sample.spec || "未填规格")} · ${escapeHtml(sample.status || "待确认")}</span>
+            <span>${escapeHtml(sample.spec || "未填规格")}</span>
           </div>
         </div>
       </button>
     `).join("") : `<div class="empty">这个项目还没有样品</div>`;
-    return pageShell(project.name, "项目详情 · 点击样品进入具体产品详情", `<section class="list">${body}</section>`, "projects");
+    return pageShell(project.name, "项目详情 · 点击样品进入具体产品详情", `
+      <section class="list">${body}</section>
+      <button class="btn primary add-sample-btn" data-entry-project="${project.id}">补录</button>
+    `, "projects");
   }
 
   function sampleDetailPage(sampleId) {
@@ -235,9 +307,6 @@
         </div>
         <div class="grid-2">
           <div class="field"><label>价格</label><input name="price" type="number" step="0.01" value="${escapeHtml(sample.price || "")}" /></div>
-          <div class="field"><label>状态</label><select name="status">
-            ${["待确认", "已确认", "已同步", "已归档"].map((status) => `<option ${sample.status === status ? "selected" : ""}>${status}</option>`).join("")}
-          </select></div>
         </div>
         <div class="field"><label>备注</label><textarea name="remark">${escapeHtml(sample.remark || "")}</textarea></div>
         <button class="btn primary" type="submit">保存调整</button>
@@ -255,12 +324,23 @@
         <div class="detail-row"><span>产地</span><b>${escapeHtml(sample.origin || "-")}</b></div>
         <div class="detail-row"><span>价格</span><b>${escapeHtml(sample.price || "-")}</b></div>
         <div class="detail-row"><span>项目</span><b>${escapeHtml(project?.name || "-")}</b></div>
-        <div class="detail-row"><span>状态</span><b>${escapeHtml(sample.status || "待确认")}</b></div>
       </section>
     `;
   }
 
   function syncPage() {
+    const importInfo = state.importFile ? `
+      <div class="import-confirm">
+        <div>
+          <strong>已选择导入包</strong>
+          <p>${escapeHtml(state.importFile.name)} · ${formatFileSize(state.importFile.size)}</p>
+        </div>
+        <div class="actions compact">
+          <button class="btn soft" id="cancel-import" type="button">取消选择</button>
+          <button class="btn primary" id="confirm-import" type="button">确认导入</button>
+        </div>
+      </div>
+    ` : "";
     return pageShell("同步中心", "只处理数据包导入和导出", `
       <section class="sync-card card">
         <div>
@@ -268,9 +348,16 @@
           <p class="meta">项目 ${state.projects.length} 个 · 样品 ${state.samples.length} 条</p>
         </div>
         <button class="btn primary" id="export-package">导出给电脑</button>
-        <button class="btn soft" id="pick-import">导入电脑同步包</button>
+        ${state.exportFile ? `
+          <a class="download-link" href="${state.exportFile.url}" download="${escapeHtml(state.exportFile.name)}">
+            下载导出包：${escapeHtml(state.exportFile.name)}
+          </a>
+          <div class="success">导出包已生成。浏览器下载后，可手动放到 dev/mobile/exports 目录归档。</div>
+        ` : ""}
+        <label class="btn soft file-btn" for="import-file">选择电脑同步包</label>
         <input class="hidden-file" id="import-file" type="file" accept=".zip,.json,application/zip,application/json" />
-        <div class="notice">第一版使用完整数据包双向同步；导入前请确认包来源可靠。</div>
+        ${importInfo}
+        <div class="notice">第一版使用完整数据包双向同步；开发预览不能自动写入项目文件夹，导出包会通过浏览器下载。</div>
       </section>
     `, "home");
   }
@@ -300,6 +387,12 @@
     app.querySelectorAll("[data-project]").forEach((el) => {
       el.addEventListener("click", () => go("project", { projectId: el.dataset.project }));
     });
+    app.querySelectorAll("[data-edit-project]").forEach((el) => {
+      el.addEventListener("click", () => showProjectNameDialog(el.dataset.editProject));
+    });
+    app.querySelectorAll("[data-entry-project]").forEach((el) => {
+      el.addEventListener("click", () => go("entry", { projectId: el.dataset.entryProject }));
+    });
     app.querySelectorAll("[data-sample]").forEach((el) => {
       el.addEventListener("click", () => go("sample", { sampleId: el.dataset.sample }));
     });
@@ -313,31 +406,50 @@
     const exportButton = app.querySelector("#export-package");
     if (exportButton) exportButton.addEventListener("click", exportPackage);
 
-    const pickImport = app.querySelector("#pick-import");
     const importFile = app.querySelector("#import-file");
-    if (pickImport && importFile) {
-      pickImport.addEventListener("click", () => importFile.click());
-      importFile.addEventListener("change", importPackage);
+    if (importFile) {
+      importFile.addEventListener("change", selectImportPackage);
+    }
+
+    const cancelImport = app.querySelector("#cancel-import");
+    if (cancelImport) {
+      cancelImport.addEventListener("click", () => {
+        state.importFile = null;
+        state.message = "";
+        state.messageType = "success";
+        render();
+      });
+    }
+
+    const confirmImport = app.querySelector("#confirm-import");
+    if (confirmImport) {
+      confirmImport.addEventListener("click", importPackage);
     }
   }
 
   function bindEntryForm(form) {
     const photoInput = form.elements.photo;
-    let photoData = "";
+    form.dataset.photoData = form.dataset.photoData || "";
     photoInput.addEventListener("change", async () => {
       const file = photoInput.files?.[0];
       if (!file) return;
-      photoData = await fileToDataUrl(file);
+      form.dataset.photoData = await fileToDataUrl(file);
       const picker = app.querySelector("#photo-picker");
-      picker.innerHTML = `<input name="photo" type="file" accept="image/*" capture="environment" /><img src="${photoData}" alt="" />`;
+      picker.innerHTML = `<input name="photo" type="file" accept="image/*" capture="environment" /><img src="${form.dataset.photoData}" alt="" />`;
       bindEntryForm(form);
     });
+    if (form.dataset.submitBound) return;
+    form.dataset.submitBound = "1";
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const data = new FormData(form);
+      const project = await resolveEntryProject(
+        String(data.get("newProjectName") || "").trim(),
+        String(data.get("projectId") || "")
+      );
       const sample = {
         id: id("S"),
-        projectId: data.get("projectId"),
+        projectId: project.id,
         name: String(data.get("name") || "").trim() || "未命名样品",
         code: "",
         spec: String(data.get("spec") || "").trim(),
@@ -345,7 +457,7 @@
         price: data.get("price") ? Number(data.get("price")) : "",
         status: "待确认",
         remark: String(data.get("remark") || "").trim(),
-        photoData,
+        photoData: form.dataset.photoData || "",
         createdAt: now(),
         updatedAt: now(),
         createdByDevice: DEVICE,
@@ -354,12 +466,41 @@
         deleted: false,
       };
       await dbApi.put("samples", sample);
-      const project = await dbApi.get("projects", sample.projectId);
-      if (project) await dbApi.put("projects", { ...project, updatedAt: now(), updatedByDevice: DEVICE, version: (project.version || 1) + 1 });
+      await dbApi.put("projects", { ...project, updatedAt: now(), updatedByDevice: DEVICE, version: (project.version || 1) + 1 });
       state.lastSavedSample = sample;
       await refresh();
       go("entryDetail");
-    }, { once: true });
+    });
+  }
+
+  async function resolveEntryProject(newProjectName, selectedProjectId) {
+    if (!newProjectName) {
+      const selected = state.projects.find((project) => project.id === selectedProjectId);
+      if (selected) return selected;
+    }
+    return findOrCreateProject(newProjectName || "默认项目");
+  }
+
+  async function findOrCreateProject(projectName) {
+    const name = projectName.trim() || "默认项目";
+    const existing = state.projects.find((project) => project.name === name);
+    if (existing) return existing;
+    const project = {
+      id: id("P"),
+      name,
+      customer: "",
+      remark: "",
+      status: "进行中",
+      createdAt: now(),
+      updatedAt: now(),
+      createdByDevice: DEVICE,
+      updatedByDevice: DEVICE,
+      version: 1,
+      deleted: false,
+    };
+    await dbApi.put("projects", project);
+    state.projects = [project, ...state.projects];
+    return project;
   }
 
   function bindEditForm(form) {
@@ -374,7 +515,6 @@
         spec: String(data.get("spec") || "").trim(),
         origin: String(data.get("origin") || "").trim(),
         price: data.get("price") ? Number(data.get("price")) : "",
-        status: String(data.get("status") || "待确认"),
         remark: String(data.get("remark") || "").trim(),
         updatedAt: now(),
         updatedByDevice: DEVICE,
@@ -420,11 +560,27 @@
     const zip = makeZip(files);
     const fileName = `sample_sync_${APP_ENV}_${formatStamp(new Date())}.zip`;
     await saveBlob(zip, fileName);
+    state.message = "导出包已生成";
+    render();
   }
 
-  async function importPackage(event) {
+  function selectImportPackage(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+    state.importFile = file;
+    state.message = "请确认导入包名称后再导入";
+    state.messageType = "info";
+    render();
+  }
+
+  async function importPackage() {
+    const file = state.importFile;
+    if (!file) {
+      state.message = "请先选择电脑同步包";
+      state.messageType = "error";
+      render();
+      return;
+    }
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const files = file.name.endsWith(".json")
@@ -446,13 +602,15 @@
       });
       await mergeRecords(projects, samples);
       await refresh();
+      state.importFile = null;
       state.message = `导入完成：项目 ${projects.length} 个，样品 ${samples.length} 条`;
-      go("sync");
+      state.messageType = "success";
+      state.route = { name: "sync" };
+      render();
     } catch (error) {
       state.message = `导入失败：${error.message}`;
+      state.messageType = "error";
       render();
-    } finally {
-      event.target.value = "";
     }
   }
 
@@ -477,18 +635,29 @@
     return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}_${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
   }
 
+  function formatFileSize(size) {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / 1024 / 1024).toFixed(1)} MB`;
+  }
+
   async function saveBlob(blob, fileName) {
+    if (state.exportFile?.url) URL.revokeObjectURL(state.exportFile.url);
+    const url = URL.createObjectURL(blob);
+    state.exportFile = { name: fileName, url };
     const file = new File([blob], fileName, { type: "application/zip" });
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: "样品同步包" });
-      return;
+      try {
+        await navigator.share({ files: [file], title: "样品同步包" });
+        return;
+      } catch (error) {
+        // Keep the download link visible when system sharing is cancelled or unavailable.
+      }
     }
-    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = fileName;
     a.click();
-    URL.revokeObjectURL(url);
   }
 
   function dataUrlToBytes(dataUrl) {
