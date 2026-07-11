@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1200" viewBox="0 0 1900 1200">
+  <defs>
+    <style>
+      .bg{fill:#f3f6fb}.title{font:800 34px "Microsoft YaHei",Arial;fill:#111827}.sub{font:16px "Microsoft YaHei",Arial;fill:#64748b}
+      .win{fill:#fff;stroke:#dbe3ef;stroke-width:1.5;rx:18}.side{fill:#182536;rx:18}.sideCut{fill:#182536}
+      .sideTitle{font:800 22px "Microsoft YaHei",Arial;fill:#fff}.sideSub{font:13px "Microsoft YaHei",Arial;fill:#9ca3af}
+      .navA{fill:#2563eb;rx:12}.navI{fill:transparent;rx:12}.navAT{font:800 15px "Microsoft YaHei",Arial;fill:#fff}.navT{font:700 15px "Microsoft YaHei",Arial;fill:#d1d5db}
+      .content{fill:#f8fafc;rx:18}.h1{font:800 25px "Microsoft YaHei",Arial;fill:#111827}.h2{font:800 17px "Microsoft YaHei",Arial;fill:#111827}
+      .txt{font:14px "Microsoft YaHei",Arial;fill:#334155}.muted{font:13px "Microsoft YaHei",Arial;fill:#64748b}.tiny{font:12px "Microsoft YaHei",Arial;fill:#94a3b8}
+      .card{fill:#fff;stroke:#e2e8f0;stroke-width:1.2;rx:15}.field{fill:#fff;stroke:#dbe3ef;stroke-width:1.2;rx:11}
+      .primary{fill:#2563eb;rx:11}.secondary{fill:#eef2ff;rx:11}.neutral{fill:#f1f5f9;rx:11}
+      .pt{font:800 14px "Microsoft YaHei",Arial;fill:#fff}.st{font:700 14px "Microsoft YaHei",Arial;fill:#2563eb}.nt{font:700 14px "Microsoft YaHei",Arial;fill:#334155}
+      .photo{fill:#e2e8f0;rx:12}.chipB{fill:#dbeafe;rx:12}.chipG{fill:#dcfce7;rx:12}.chipO{fill:#ffedd5;rx:12}
+      .cb{font:12px "Microsoft YaHei",Arial;fill:#1d4ed8}.cg{font:12px "Microsoft YaHei",Arial;fill:#15803d}.co{font:12px "Microsoft YaHei",Arial;fill:#c2410c}
+      .arrow{stroke:#94a3b8;stroke-width:2.2;fill:none;marker-end:url(#arrow)}.flow{fill:#eff6ff;stroke:#bfdbfe;stroke-width:1.2;rx:16}.flowT{font:800 15px "Microsoft YaHei",Arial;fill:#1d4ed8}
+      .note{fill:#fff;stroke:#e2e8f0;stroke-width:1.2;rx:16}.noteT{font:800 18px "Microsoft YaHei",Arial;fill:#111827}.noteTxt{font:14px "Microsoft YaHei",Arial;fill:#475569}
+      .tableHead{fill:#f1f5f9;rx:10}.line{stroke:#e2e8f0;stroke-width:1}.th{font:700 13px "Microsoft YaHei",Arial;fill:#475569}.td{font:13px "Microsoft YaHei",Arial;fill:#334155}
+    </style>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="16" stdDeviation="22" flood-color="#0f172a" flood-opacity=".14"/></filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#94a3b8"/></marker>
+  </defs>
+  <rect class="bg" width="1900" height="1200"/>
+  <text class="title" x="70" y="68">电脑端分层页面设计稿</text>
+  <text class="sub" x="70" y="100">优化后：每个页面只加载当前层级数据，避免项目、样品、详情全部堆在一个页面导致后期变慢。</text>
+
+  <!-- Page 1 -->
+  <g transform="translate(70,145)" filter="url(#shadow)">
+    <rect class="win" width="540" height="690"/><rect class="content" x="170" width="370" height="690"/>
+    <rect class="side" width="185" height="690"/><rect class="sideCut" x="165" width="20" height="690"/>
+    <text class="sideTitle" x="26" y="52">样品管理</text><text class="sideSub" x="26" y="78">本地使用</text>
+    <rect class="navA" x="22" y="118" width="130" height="42"/><text class="navAT" x="70" y="145">项目</text>
+    <rect class="navI" x="22" y="178" width="130" height="42"/><text class="navT" x="54" y="205">导入导出</text>
+    <text class="h1" x="215" y="58">项目列表</text><text class="muted" x="215" y="84">只显示项目，不加载样品详情</text>
+    <rect class="field" x="215" y="112" width="270" height="42"/><text class="muted" x="235" y="139">搜索项目</text>
+    <rect class="card" x="215" y="185" width="270" height="76"/><text class="h2" x="237" y="216">项目 A</text><text class="muted" x="237" y="240">12 条样品 · 今天更新</text>
+    <rect class="card" x="215" y="280" width="270" height="76"/><text class="h2" x="237" y="311">项目 B</text><text class="muted" x="237" y="335">9 条样品 · 已整理</text>
+    <rect class="card" x="215" y="375" width="270" height="76"/><text class="h2" x="237" y="406">项目 C</text><text class="muted" x="237" y="430">7 条样品 · 待确认</text>
+    <rect class="primary" x="215" y="500" width="125" height="40"/><text class="pt" x="249" y="526">新建项目</text>
+    <rect class="neutral" x="360" y="500" width="125" height="40"/><text class="nt" x="394" y="526">导入包</text>
+  </g>
+  <text class="h2" x="250" y="870">页面一：项目列表</text>
+
+  <!-- Page 2 -->
+  <g transform="translate(680,145)" filter="url(#shadow)">
+    <rect class="win" width="540" height="690"/><rect class="content" x="170" width="370" height="690"/>
+    <rect class="side" width="185" height="690"/><rect class="sideCut" x="165" width="20" height="690"/>
+    <text class="sideTitle" x="26" y="52">样品管理</text><text class="sideSub" x="26" y="78">项目详情</text>
+    <rect class="navA" x="22" y="118" width="130" height="42"/><text class="navAT" x="70" y="145">项目</text>
+    <rect class="navI" x="22" y="178" width="130" height="42"/><text class="navT" x="54" y="205">导入导出</text>
+    <text class="muted" x="215" y="42">← 返回项目列表</text>
+    <text class="h1" x="215" y="78">项目 A</text><text class="muted" x="215" y="104">只加载当前项目下样品</text>
+    <rect class="secondary" x="215" y="126" width="110" height="38"/><text class="st" x="243" y="151">调整项目</text>
+    <rect class="neutral" x="340" y="126" width="110" height="38"/><text class="nt" x="368" y="151">导出Excel</text>
+    <rect class="field" x="215" y="190" width="270" height="40"/><text class="muted" x="235" y="216">搜索样品</text>
+    <rect class="card" x="215" y="260" width="270" height="76"/><rect class="photo" x="235" y="278" width="46" height="42"/><text class="h2" x="298" y="293">前壳样品</text><text class="muted" x="298" y="318">20mm · 待确认</text>
+    <rect class="card" x="215" y="355" width="270" height="76"/><rect class="photo" x="235" y="373" width="46" height="42"/><text class="h2" x="298" y="388">后壳样品</text><text class="muted" x="298" y="413">18mm · 已确认</text>
+    <rect class="card" x="215" y="450" width="270" height="76"/><rect class="photo" x="235" y="468" width="46" height="42"/><text class="h2" x="298" y="483">螺丝样品</text><text class="muted" x="298" y="508">M3 · 已同步</text>
+  </g>
+  <text class="h2" x="860" y="870">页面二：项目详情</text>
+
+  <!-- Page 3 -->
+  <g transform="translate(1290,145)" filter="url(#shadow)">
+    <rect class="win" width="540" height="690"/><rect class="content" x="170" width="370" height="690"/>
+    <rect class="side" width="185" height="690"/><rect class="sideCut" x="165" width="20" height="690"/>
+    <text class="sideTitle" x="26" y="52">样品管理</text><text class="sideSub" x="26" y="78">样品调整</text>
+    <rect class="navA" x="22" y="118" width="130" height="42"/><text class="navAT" x="70" y="145">项目</text>
+    <rect class="navI" x="22" y="178" width="130" height="42"/><text class="navT" x="54" y="205">导入导出</text>
+    <text class="muted" x="215" y="42">← 返回项目 A</text>
+    <text class="h1" x="215" y="78">前壳样品</text><text class="muted" x="215" y="104">调整具体样品内容</text>
+    <rect class="photo" x="255" y="130" width="185" height="135"/>
+    <text class="muted" x="215" y="302">图片名称</text><rect class="field" x="215" y="315" width="270" height="40"/><text class="txt" x="235" y="341">前壳样品</text>
+    <text class="muted" x="215" y="382">规格 / 产地</text><rect class="field" x="215" y="395" width="125" height="40"/><text class="txt" x="235" y="421">20mm</text><rect class="field" x="360" y="395" width="125" height="40"/><text class="txt" x="380" y="421">广东</text>
+    <text class="muted" x="215" y="462">价格 / 状态</text><rect class="field" x="215" y="475" width="125" height="40"/><text class="txt" x="235" y="501">12.5</text><rect class="field" x="360" y="475" width="125" height="40"/><text class="txt" x="380" y="501">待确认</text>
+    <rect class="neutral" x="215" y="570" width="125" height="42"/><text class="nt" x="249" y="597">取消</text><rect class="primary" x="360" y="570" width="125" height="42"/><text class="pt" x="394" y="597">保存</text>
+  </g>
+  <text class="h2" x="1460" y="870">页面三：样品调整</text>
+
+  <!-- Flow -->
+  <g transform="translate(230,940)">
+    <rect class="flow" x="0" y="0" width="190" height="58"/><text class="flowT" x="61" y="36">项目列表</text>
+    <path class="arrow" d="M205 29 C250 29, 275 29, 320 29"/>
+    <rect class="flow" x="335" y="0" width="190" height="58"/><text class="flowT" x="396" y="36">项目详情</text>
+    <path class="arrow" d="M540 29 C585 29, 610 29, 655 29"/>
+    <rect class="flow" x="670" y="0" width="230" height="58"/><text class="flowT" x="731" y="36">调整样品内容</text>
+  </g>
+
+  <!-- Notes -->
+  <g transform="translate(70,1040)">
+    <rect class="note" width="780" height="105"/>
+    <text class="noteT" x="24" y="38">页面逻辑调整</text>
+    <text class="noteTxt" x="24" y="70">项目列表页只请求项目汇总；点击项目后才加载该项目样品；点击样品后才加载和编辑具体样品内容。</text>
+  </g>
+  <g transform="translate(890,1040)">
+    <rect class="note" width="820" height="105"/>
+    <text class="noteT" x="24" y="38">性能原则</text>
+    <text class="noteTxt" x="24" y="70">避免一个页面同时加载项目、全部样品、图片和详情。图片列表使用缩略图，详情页再加载大图。</text>
+  </g>
+</svg>

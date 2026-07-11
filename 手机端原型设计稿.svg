@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050">
+  <defs>
+    <style>
+      .bg { fill: #f5f6f8; }
+      .phone { fill: #f2f3f5; stroke: #cfd4dc; stroke-width: 2; rx: 28; }
+      .screen-title { font: 700 20px "Microsoft YaHei", Arial, sans-serif; fill: #1f2937; }
+      .label { font: 15px "Microsoft YaHei", Arial, sans-serif; fill: #374151; }
+      .small { font: 13px "Microsoft YaHei", Arial, sans-serif; fill: #6b7280; }
+      .btn { fill: #2563eb; rx: 12; }
+      .btn-dark { fill: #4b5563; rx: 12; }
+      .btn-light { fill: #e5e7eb; stroke: #d1d5db; rx: 12; }
+      .btn-text { font: 700 17px "Microsoft YaHei", Arial, sans-serif; fill: #fff; }
+      .btn-light-text { font: 700 16px "Microsoft YaHei", Arial, sans-serif; fill: #374151; }
+      .card { fill: #ffffff; stroke: #e5e7eb; stroke-width: 1.5; rx: 14; }
+      .field { fill: #ffffff; stroke: #d1d5db; stroke-width: 1.5; rx: 10; }
+      .image-box { fill: #d1d5db; stroke: #9ca3af; stroke-width: 1.5; rx: 10; }
+      .line { stroke: #9ca3af; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .chip { fill: #eef2ff; rx: 16; }
+      .chip-text { font: 13px "Microsoft YaHei", Arial, sans-serif; fill: #3730a3; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#9ca3af"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1600" height="1050"/>
+  <text x="70" y="60" font-family="Microsoft YaHei, Arial" font-size="30" font-weight="700" fill="#111827">手机端样品采集 App 简易原型</text>
+  <text x="70" y="95" font-family="Microsoft YaHei, Arial" font-size="16" fill="#6b7280">核心流程：主页 → 录入 → 查看 → 详情 → 同步中心</text>
+
+  <!-- Phone 1: Home -->
+  <g transform="translate(80,140)">
+    <rect class="phone" x="0" y="0" width="250" height="500"/>
+    <text class="screen-title" x="82" y="48">样品采集</text>
+    <rect class="chip" x="54" y="72" width="142" height="30"/>
+    <text class="chip-text" x="76" y="92">本地离线使用</text>
+
+    <rect class="btn" x="35" y="125" width="180" height="58"/>
+    <text class="btn-text" x="87" y="160">录入</text>
+
+    <rect class="btn-dark" x="35" y="215" width="180" height="58"/>
+    <text class="btn-text" x="87" y="250">查看</text>
+
+    <rect class="btn-light" x="35" y="305" width="180" height="58"/>
+    <text class="btn-light-text" x="87" y="340">同步</text>
+
+    <rect class="card" x="28" y="405" width="194" height="58"/>
+    <text class="small" x="48" y="430">项目 3 个 · 样品 28 条</text>
+    <text class="small" x="48" y="452">上次同步：今天 10:30</text>
+  </g>
+
+  <!-- Phone 2: Entry -->
+  <g transform="translate(395,140)">
+    <rect class="phone" x="0" y="0" width="250" height="500"/>
+    <text class="screen-title" x="103" y="42">录入</text>
+
+    <rect class="btn-light" x="28" y="67" width="194" height="50"/>
+    <text class="btn-light-text" x="102" y="98">拍照</text>
+
+    <rect class="image-box" x="77" y="135" width="96" height="86"/>
+    <text class="small" x="94" y="184">照片预览</text>
+
+    <text class="label" x="28" y="252">图片名称</text>
+    <rect class="field" x="94" y="232" width="128" height="34"/>
+
+    <text class="label" x="28" y="300">规格</text>
+    <rect class="field" x="94" y="280" width="128" height="34"/>
+
+    <text class="label" x="28" y="348">产地</text>
+    <rect class="field" x="94" y="328" width="128" height="34"/>
+
+    <text class="label" x="28" y="396">价格</text>
+    <rect class="field" x="94" y="376" width="128" height="34"/>
+
+    <text class="label" x="28" y="444">项目</text>
+    <rect class="field" x="94" y="424" width="128" height="34"/>
+
+    <rect class="btn" x="35" y="468" width="180" height="45"/>
+    <text class="btn-text" x="87" y="497">确认</text>
+  </g>
+
+  <!-- Phone 3: Project List -->
+  <g transform="translate(710,140)">
+    <rect class="phone" x="0" y="0" width="250" height="500"/>
+    <text class="screen-title" x="84" y="45">选择项目</text>
+
+    <rect class="card" x="28" y="80" width="194" height="64"/>
+    <text class="label" x="48" y="111">项目名称 A</text>
+    <text class="small" x="48" y="133">样品 12 条</text>
+
+    <rect class="card" x="28" y="162" width="194" height="64"/>
+    <text class="label" x="48" y="193">项目名称 B</text>
+    <text class="small" x="48" y="215">样品 9 条</text>
+
+    <rect class="card" x="28" y="244" width="194" height="64"/>
+    <text class="label" x="48" y="275">项目名称 C</text>
+    <text class="small" x="48" y="297">样品 7 条</text>
+
+    <rect class="btn-light" x="35" y="395" width="180" height="50"/>
+    <text class="btn-light-text" x="75" y="426">新增项目</text>
+  </g>
+
+  <!-- Phone 4: Gallery -->
+  <g transform="translate(1025,140)">
+    <rect class="phone" x="0" y="0" width="250" height="500"/>
+    <text class="screen-title" x="77" y="45">项目名称 A</text>
+
+    <rect class="image-box" x="34" y="84" width="78" height="92"/>
+    <rect class="image-box" x="138" y="84" width="78" height="92"/>
+    <text class="small" x="45" y="202">图片名称</text>
+    <text class="small" x="149" y="202">图片名称</text>
+
+    <rect class="image-box" x="34" y="237" width="78" height="92"/>
+    <rect class="image-box" x="138" y="237" width="78" height="92"/>
+    <text class="small" x="45" y="355">图片名称</text>
+    <text class="small" x="149" y="355">图片名称</text>
+
+    <rect class="btn" x="35" y="420" width="180" height="48"/>
+    <text class="btn-text" x="70" y="450">继续录入</text>
+  </g>
+
+  <!-- Phone 5: Detail -->
+  <g transform="translate(80,710)">
+    <rect class="phone" x="0" y="0" width="250" height="290"/>
+    <text class="screen-title" x="102" y="40">详情</text>
+
+    <rect class="image-box" x="75" y="65" width="100" height="88"/>
+    <text class="label" x="38" y="185">图片名称：样品 001</text>
+    <text class="label" x="38" y="218">规格：20mm</text>
+    <text class="label" x="38" y="251">产地：广东</text>
+  </g>
+
+  <g transform="translate(395,710)">
+    <rect class="phone" x="0" y="0" width="250" height="290"/>
+    <text class="screen-title" x="102" y="40">详情</text>
+    <text class="label" x="38" y="80">价格：12.5</text>
+    <text class="label" x="38" y="116">项目：项目名称 A</text>
+    <text class="label" x="38" y="152">备注：待电脑端整理</text>
+    <rect class="btn-light" x="35" y="202" width="82" height="44"/>
+    <text class="btn-light-text" x="61" y="231">编辑</text>
+    <rect class="btn" x="132" y="202" width="82" height="44"/>
+    <text class="btn-text" x="158" y="231">返回</text>
+  </g>
+
+  <!-- Phone 6: Sync -->
+  <g transform="translate(710,710)">
+    <rect class="phone" x="0" y="0" width="250" height="290"/>
+    <text class="screen-title" x="84" y="42">同步中心</text>
+    <rect class="card" x="28" y="68" width="194" height="68"/>
+    <text class="small" x="46" y="96">待导出：新增 5 · 修改 2</text>
+    <text class="small" x="46" y="120">上次导入：今天 10:30</text>
+
+    <rect class="btn" x="35" y="160" width="180" height="46"/>
+    <text class="btn-text" x="70" y="190">导出给电脑</text>
+
+    <rect class="btn-dark" x="35" y="222" width="180" height="46"/>
+    <text class="btn-text" x="56" y="252">导入电脑同步包</text>
+  </g>
+
+  <!-- Flow lines -->
+  <path class="line" d="M330 295 C360 295, 365 295, 395 295"/>
+  <path class="line" d="M330 385 C520 520, 820 475, 1025 385"/>
+  <path class="line" d="M330 475 C515 620, 565 775, 710 825"/>
+  <path class="line" d="M645 315 C680 315, 685 250, 710 250"/>
+  <path class="line" d="M960 300 C990 300, 995 300, 1025 300"/>
+  <path class="line" d="M1150 640 C1150 680, 835 680, 835 710"/>
+
+  <!-- Notes -->
+  <g transform="translate(1300,150)">
+    <rect class="card" x="0" y="0" width="230" height="395"/>
+    <text class="screen-title" x="24" y="42">设计说明</text>
+    <text class="label" x="24" y="88">1. 首页只保留三件事</text>
+    <text class="small" x="42" y="114">录入 / 查看 / 同步</text>
+    <text class="label" x="24" y="158">2. 录入页优先拍照</text>
+    <text class="small" x="42" y="184">减少现场操作步骤</text>
+    <text class="label" x="24" y="228">3. 查看按项目进入</text>
+    <text class="small" x="42" y="254">图片宫格展示样品</text>
+    <text class="label" x="24" y="298">4. 同步做成独立页面</text>
+    <text class="small" x="42" y="324">导出给电脑 / 导入电脑包</text>
+    <text class="small" x="42" y="350">保持手机操作简单</text>
+  </g>
+</svg>

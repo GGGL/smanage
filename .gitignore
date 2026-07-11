@@ -1,0 +1,9 @@
+.agents/
+.codex/
+node_modules/
+dist/
+build/
+*.log
+*.tmp
+Thumbs.db
+.DS_Store

@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120">
+  <defs>
+    <style>
+      .bg { fill: #f3f6fb; }
+      .title { font: 800 34px "Microsoft YaHei", Arial, sans-serif; fill: #111827; }
+      .subtitle { font: 16px "Microsoft YaHei", Arial, sans-serif; fill: #64748b; }
+      .window { fill: #ffffff; stroke: #dbe3ef; stroke-width: 1.5; rx: 18; }
+      .sidebar { fill: #1f2937; rx: 18; }
+      .sidebarCut { fill: #1f2937; }
+      .sideTitle { font: 800 22px "Microsoft YaHei", Arial, sans-serif; fill: #ffffff; }
+      .sideSub { font: 13px "Microsoft YaHei", Arial, sans-serif; fill: #94a3b8; }
+      .navActive { fill: #2563eb; rx: 12; }
+      .navItem { fill: transparent; rx: 12; }
+      .navText { font: 700 15px "Microsoft YaHei", Arial, sans-serif; fill: #cbd5e1; }
+      .navTextActive { font: 800 15px "Microsoft YaHei", Arial, sans-serif; fill: #ffffff; }
+      .contentBg { fill: #f8fafc; }
+      .h1 { font: 800 25px "Microsoft YaHei", Arial, sans-serif; fill: #111827; }
+      .h2 { font: 800 17px "Microsoft YaHei", Arial, sans-serif; fill: #111827; }
+      .text { font: 14px "Microsoft YaHei", Arial, sans-serif; fill: #334155; }
+      .muted { font: 13px "Microsoft YaHei", Arial, sans-serif; fill: #64748b; }
+      .tiny { font: 12px "Microsoft YaHei", Arial, sans-serif; fill: #94a3b8; }
+      .card { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1.2; rx: 14; }
+      .field { fill: #ffffff; stroke: #dbe3ef; stroke-width: 1.2; rx: 11; }
+      .primary { fill: #2563eb; rx: 11; }
+      .secondary { fill: #eef2ff; rx: 11; }
+      .neutral { fill: #f1f5f9; rx: 11; }
+      .primaryText { font: 800 14px "Microsoft YaHei", Arial, sans-serif; fill: #ffffff; }
+      .secondaryText { font: 700 14px "Microsoft YaHei", Arial, sans-serif; fill: #2563eb; }
+      .neutralText { font: 700 14px "Microsoft YaHei", Arial, sans-serif; fill: #334155; }
+      .tableHead { fill: #f1f5f9; rx: 10; }
+      .tableLine { stroke: #e2e8f0; stroke-width: 1; }
+      .th { font: 700 13px "Microsoft YaHei", Arial, sans-serif; fill: #475569; }
+      .td { font: 13px "Microsoft YaHei", Arial, sans-serif; fill: #334155; }
+      .chipBlue { fill: #dbeafe; rx: 12; }
+      .chipGreen { fill: #dcfce7; rx: 12; }
+      .chipOrange { fill: #ffedd5; rx: 12; }
+      .chipTextBlue { font: 12px "Microsoft YaHei", Arial, sans-serif; fill: #1d4ed8; }
+      .chipTextGreen { font: 12px "Microsoft YaHei", Arial, sans-serif; fill: #15803d; }
+      .chipTextOrange { font: 12px "Microsoft YaHei", Arial, sans-serif; fill: #c2410c; }
+      .photo { fill: #e2e8f0; rx: 12; }
+      .line { stroke: #cbd5e1; stroke-width: 1.4; }
+      .note { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1.2; rx: 16; }
+      .noteTitle { font: 800 18px "Microsoft YaHei", Arial, sans-serif; fill: #111827; }
+      .noteText { font: 14px "Microsoft YaHei", Arial, sans-serif; fill: #475569; }
+    </style>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="22" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect class="bg" width="1800" height="1120"/>
+  <text class="title" x="70" y="68">电脑端样品管理系统简洁设计稿</text>
+  <text class="subtitle" x="70" y="100">本地 Web 管理端：左侧导航，右侧项目、样品、详情、导入导出集中管理。</text>
+
+  <!-- Main window -->
+  <g transform="translate(70,145)" filter="url(#shadow)">
+    <rect class="window" width="1660" height="760"/>
+    <rect class="contentBg" x="260" y="0" width="1400" height="760" rx="18"/>
+    <rect class="sidebar" x="0" y="0" width="280" height="760"/>
+    <rect class="sidebarCut" x="248" y="0" width="32" height="760"/>
+
+    <!-- Sidebar -->
+    <text class="sideTitle" x="34" y="58">样品管理</text>
+    <text class="sideSub" x="34" y="84">本地数据 · 离线使用</text>
+
+    <rect class="navActive" x="24" y="128" width="220" height="46"/>
+    <text class="navTextActive" x="62" y="157">项目</text>
+
+    <rect class="navItem" x="24" y="190" width="220" height="46"/>
+    <text class="navText" x="62" y="219">样品</text>
+
+    <rect class="navItem" x="24" y="252" width="220" height="46"/>
+    <text class="navText" x="62" y="281">导入 / 导出</text>
+
+    <rect class="navItem" x="24" y="314" width="220" height="46"/>
+    <text class="navText" x="62" y="343">备份记录</text>
+
+    <rect class="card" x="24" y="600" width="220" height="106" opacity="0.12"/>
+    <text class="sideSub" x="42" y="632">当前数据</text>
+    <text class="sideSub" x="42" y="660">项目 3 个</text>
+    <text class="sideSub" x="42" y="686">样品 28 条</text>
+
+    <!-- Header -->
+    <text class="h1" x="320" y="60">项目管理</text>
+    <text class="muted" x="320" y="86">导入手机采集包后，在这里按项目查看、整理和修改样品。</text>
+
+    <rect class="field" x="320" y="112" width="470" height="44"/>
+    <text class="muted" x="340" y="140">搜索项目、样品名称、规格、产地</text>
+
+    <rect class="secondary" x="815" y="112" width="120" height="44"/>
+    <text class="secondaryText" x="846" y="140">筛选</text>
+
+    <rect class="primary" x="1190" y="112" width="140" height="44"/>
+    <text class="primaryText" x="1223" y="140">导入手机包</text>
+
+    <rect class="secondary" x="1348" y="112" width="140" height="44"/>
+    <text class="secondaryText" x="1380" y="140">导出给手机</text>
+
+    <rect class="neutral" x="1506" y="112" width="110" height="44"/>
+    <text class="neutralText" x="1534" y="140">导出Excel</text>
+
+    <!-- Stat cards -->
+    <rect class="card" x="320" y="188" width="230" height="92"/>
+    <text class="muted" x="342" y="222">项目总数</text>
+    <text class="h1" x="342" y="258">3</text>
+
+    <rect class="card" x="570" y="188" width="230" height="92"/>
+    <text class="muted" x="592" y="222">样品总数</text>
+    <text class="h1" x="592" y="258">28</text>
+
+    <rect class="card" x="820" y="188" width="230" height="92"/>
+    <text class="muted" x="842" y="222">待同步修改</text>
+    <text class="h1" x="842" y="258">7</text>
+
+    <rect class="card" x="1070" y="188" width="230" height="92"/>
+    <text class="muted" x="1092" y="222">冲突待处理</text>
+    <text class="h1" x="1092" y="258">1</text>
+
+    <!-- Project list -->
+    <rect class="card" x="320" y="310" width="355" height="390"/>
+    <text class="h2" x="342" y="344">项目列表</text>
+
+    <rect class="secondary" x="342" y="370" width="310" height="72"/>
+    <text class="h2" x="362" y="400">项目 A</text>
+    <text class="muted" x="362" y="424">12 条样品 · 今天导入</text>
+    <rect class="chipBlue" x="574" y="392" width="58" height="24"/>
+    <text class="chipTextBlue" x="586" y="409">选中</text>
+
+    <rect class="card" x="342" y="458" width="310" height="72"/>
+    <text class="h2" x="362" y="488">项目 B</text>
+    <text class="muted" x="362" y="512">9 条样品 · 已整理</text>
+
+    <rect class="card" x="342" y="546" width="310" height="72"/>
+    <text class="h2" x="362" y="576">项目 C</text>
+    <text class="muted" x="362" y="600">7 条样品 · 待确认</text>
+
+    <rect class="primary" x="342" y="638" width="145" height="38"/>
+    <text class="primaryText" x="377" y="663">新建项目</text>
+    <rect class="neutral" x="505" y="638" width="145" height="38"/>
+    <text class="neutralText" x="540" y="663">编辑项目</text>
+
+    <!-- Sample table -->
+    <rect class="card" x="700" y="310" width="600" height="390"/>
+    <text class="h2" x="722" y="344">项目 A · 样品列表</text>
+    <text class="muted" x="1162" y="344">点击行查看详情</text>
+
+    <rect class="tableHead" x="722" y="370" width="556" height="42"/>
+    <text class="th" x="742" y="396">图片</text>
+    <text class="th" x="824" y="396">名称</text>
+    <text class="th" x="970" y="396">规格</text>
+    <text class="th" x="1078" y="396">价格</text>
+    <text class="th" x="1166" y="396">状态</text>
+
+    <line class="tableLine" x1="722" y1="432" x2="1278" y2="432"/>
+    <rect class="photo" x="742" y="446" width="46" height="42"/>
+    <text class="td" x="824" y="472">前壳样品</text>
+    <text class="td" x="970" y="472">20mm</text>
+    <text class="td" x="1078" y="472">12.5</text>
+    <rect class="chipOrange" x="1166" y="452" width="62" height="24"/>
+    <text class="chipTextOrange" x="1178" y="469">待确认</text>
+
+    <line class="tableLine" x1="722" y1="506" x2="1278" y2="506"/>
+    <rect class="photo" x="742" y="520" width="46" height="42"/>
+    <text class="td" x="824" y="546">后壳样品</text>
+    <text class="td" x="970" y="546">18mm</text>
+    <text class="td" x="1078" y="546">8.0</text>
+    <rect class="chipGreen" x="1166" y="526" width="62" height="24"/>
+    <text class="chipTextGreen" x="1178" y="543">已确认</text>
+
+    <line class="tableLine" x1="722" y1="580" x2="1278" y2="580"/>
+    <rect class="photo" x="742" y="594" width="46" height="42"/>
+    <text class="td" x="824" y="620">螺丝样品</text>
+    <text class="td" x="970" y="620">M3</text>
+    <text class="td" x="1078" y="620">0.2</text>
+    <rect class="chipBlue" x="1166" y="600" width="62" height="24"/>
+    <text class="chipTextBlue" x="1178" y="617">已同步</text>
+
+    <!-- Detail panel -->
+    <rect class="card" x="1325" y="310" width="290" height="390"/>
+    <text class="h2" x="1347" y="344">样品详情</text>
+    <rect class="photo" x="1370" y="368" width="200" height="150"/>
+    <text class="text" x="1347" y="550">名称：前壳样品</text>
+    <text class="text" x="1347" y="580">规格：20mm</text>
+    <text class="text" x="1347" y="610">产地：广东</text>
+    <text class="text" x="1347" y="640">价格：12.5</text>
+
+    <rect class="secondary" x="1347" y="666" width="110" height="38"/>
+    <text class="secondaryText" x="1376" y="691">编辑</text>
+    <rect class="primary" x="1478" y="666" width="110" height="38"/>
+    <text class="primaryText" x="1507" y="691">保存</text>
+  </g>
+
+  <!-- Sync dialog / secondary screen -->
+  <g transform="translate(70,950)">
+    <rect class="note" x="0" y="0" width="510" height="120"/>
+    <text class="noteTitle" x="24" y="38">导入 / 导出入口</text>
+    <text class="noteText" x="24" y="72">左侧导航保留“导入 / 导出”，顶部也放高频按钮。</text>
+    <text class="noteText" x="24" y="98">导入手机包后自动备份，再合并项目、样品和图片。</text>
+  </g>
+
+  <g transform="translate(625,950)">
+    <rect class="note" x="0" y="0" width="510" height="120"/>
+    <text class="noteTitle" x="24" y="38">电脑端主职责</text>
+    <text class="noteText" x="24" y="72">按项目查看样品、修改详情、处理冲突、导出 Excel。</text>
+    <text class="noteText" x="24" y="98">修改完成后导出同步包，给手机端导入更新。</text>
+  </g>
+
+  <g transform="translate(1180,950)">
+    <rect class="note" x="0" y="0" width="510" height="120"/>
+    <text class="noteTitle" x="24" y="38">页面保持简单</text>
+    <text class="noteText" x="24" y="72">一个主界面完成大多数工作：左项目、中表格、右详情。</text>
+    <text class="noteText" x="24" y="98">减少弹窗和页面跳转，适合本地小工具长期使用。</text>
+  </g>
+</svg>
