@@ -3,6 +3,9 @@
 node_modules/
 dist/
 build/
+__pycache__/
+*.pyc
+desktop/app/data/
 *.log
 *.tmp
 Thumbs.db

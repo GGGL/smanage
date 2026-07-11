@@ -1,0 +1,312 @@
+const app = document.querySelector("#app");
+
+const state = {
+  page: "projects",
+  projects: [],
+  project: null,
+  samples: [],
+  sample: null,
+  logs: [],
+  q: "",
+  message: "",
+};
+
+async function api(path, options = {}) {
+  const res = await fetch(path, options);
+  const type = res.headers.get("content-type") || "";
+  if (!res.ok) {
+    const error = type.includes("json") ? await res.json() : { error: await res.text() };
+    throw new Error(error.error || "请求失败");
+  }
+  return type.includes("json") ? res.json() : res.blob();
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#039;",
+  })[char]);
+}
+
+function layout(body) {
+  const count = state.projects.reduce((sum, p) => sum + (p.sampleCount || 0), 0);
+  return `
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">样品管理</div>
+        <div class="brand-sub">本地整理 · 数据包同步</div>
+        <nav class="nav">
+          <button class="${state.page !== "sync" ? "active" : ""}" data-nav="projects">项目</button>
+          <button class="${state.page === "sync" ? "active" : ""}" data-nav="sync">导入导出</button>
+        </nav>
+        <div class="side-stat">
+          当前数据<br />
+          项目 ${state.projects.length} 个<br />
+          样品 ${count} 条
+        </div>
+      </aside>
+      <main class="main">
+        ${state.message ? `<div class="notice">${escapeHtml(state.message)}</div>` : ""}
+        ${body}
+      </main>
+    </div>
+  `;
+}
+
+async function loadProjects() {
+  state.projects = await api(`/api/projects?q=${encodeURIComponent(state.q)}`);
+}
+
+async function showProjects() {
+  state.page = "projects";
+  state.project = null;
+  state.sample = null;
+  await loadProjects();
+  render();
+}
+
+async function showProject(projectId) {
+  state.page = "project";
+  state.project = await api(`/api/projects/${encodeURIComponent(projectId)}`);
+  state.samples = await api(`/api/projects/${encodeURIComponent(projectId)}/samples?q=${encodeURIComponent(state.q)}`);
+  render();
+}
+
+async function showSample(sampleId) {
+  state.page = "sample";
+  state.sample = await api(`/api/samples/${encodeURIComponent(sampleId)}`);
+  render();
+}
+
+async function showSync() {
+  state.page = "sync";
+  state.logs = await api("/api/logs");
+  await loadProjects();
+  render();
+}
+
+function projectsPage() {
+  const cards = state.projects.length ? state.projects.map((project) => `
+    <button class="card project-card" data-project="${project.id}">
+      <strong>${escapeHtml(project.name)}</strong>
+      <div class="meta">${project.sampleCount || 0} 条样品 · ${new Date(project.updatedAt).toLocaleString()}</div>
+      <span class="pill">${escapeHtml(project.status || "进行中")}</span>
+    </button>
+  `).join("") : `<div class="card empty">暂无项目，请先导入手机采集包或新建项目</div>`;
+  return layout(`
+    <header class="page-head">
+      <div>
+        <h1>项目列表</h1>
+        <p class="hint">只加载项目汇总，点击项目后再加载该项目下的样品。</p>
+      </div>
+      <div class="toolbar">
+        <input class="search" id="search" value="${escapeHtml(state.q)}" placeholder="搜索项目" />
+        <button class="btn primary" id="new-project">新建项目</button>
+      </div>
+    </header>
+    <section class="project-grid">${cards}</section>
+  `);
+}
+
+function projectPage() {
+  const p = state.project;
+  const rows = state.samples.length ? state.samples.map((sample) => `
+    <button class="card sample-row" data-sample="${sample.id}">
+      <div class="thumb">${sample.photoUrl ? `<img src="${sample.photoUrl}" alt="" />` : ""}</div>
+      <div>
+        <strong>${escapeHtml(sample.name)}</strong>
+        <div class="meta">${escapeHtml(sample.spec || "未填规格")} · ${escapeHtml(sample.origin || "未填产地")} · ${escapeHtml(sample.price || "-")}</div>
+      </div>
+      <span class="status">${escapeHtml(sample.status || "待确认")}</span>
+    </button>
+  `).join("") : `<div class="card empty">当前项目还没有样品</div>`;
+  return layout(`
+    <header class="page-head">
+      <div>
+        <button class="btn" data-action="back-projects">← 返回项目列表</button>
+        <h1 style="margin-top:16px">${escapeHtml(p.name)}</h1>
+        <p class="hint">只加载当前项目下的样品。</p>
+      </div>
+      <div class="toolbar">
+        <input class="search" id="search" value="${escapeHtml(state.q)}" placeholder="搜索当前项目内样品" />
+        <button class="btn soft" id="edit-project">调整项目</button>
+        <button class="btn" id="export-package">导出同步包</button>
+      </div>
+    </header>
+    <section class="sample-list">${rows}</section>
+  `);
+}
+
+function samplePage() {
+  const s = state.sample;
+  return layout(`
+    <header class="page-head">
+      <div>
+        <button class="btn" data-action="back-project">← 返回项目详情</button>
+        <h1 style="margin-top:16px">${escapeHtml(s.name)}</h1>
+        <p class="hint">只加载当前样品完整数据和图片。</p>
+      </div>
+    </header>
+    <section class="detail">
+      <div class="card panel">
+        <div class="photo">${s.photoUrl ? `<img src="${s.photoUrl}" alt="" />` : ""}</div>
+      </div>
+      <form class="card panel form" id="sample-form">
+        <div class="field"><label>图片名称</label><input name="name" value="${escapeHtml(s.name)}" /></div>
+        <div class="grid-2">
+          <div class="field"><label>规格</label><input name="spec" value="${escapeHtml(s.spec || "")}" /></div>
+          <div class="field"><label>产地</label><input name="origin" value="${escapeHtml(s.origin || "")}" /></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>价格</label><input name="price" type="number" step="0.01" value="${escapeHtml(s.price || "")}" /></div>
+          <div class="field"><label>状态</label><select name="status">
+            ${["待确认", "已确认", "已同步", "已归档"].map((status) => `<option ${s.status === status ? "selected" : ""}>${status}</option>`).join("")}
+          </select></div>
+        </div>
+        <div class="field"><label>备注</label><textarea name="remark">${escapeHtml(s.remark || "")}</textarea></div>
+        <button class="btn primary" type="submit">保存调整</button>
+      </form>
+    </section>
+  `);
+}
+
+function syncPage() {
+  const logs = state.logs.length ? state.logs.map((log) => `
+    <div class="card project-card">
+      <strong>${log.action === "import" ? "导入" : "导出"}</strong>
+      <div class="meta">${escapeHtml(log.created_at)} · ${escapeHtml(log.summary)}</div>
+    </div>
+  `).join("") : `<div class="card empty">暂无导入导出记录</div>`;
+  return layout(`
+    <header class="page-head">
+      <div>
+        <h1>导入导出</h1>
+        <p class="hint">导入手机采集包，或导出同步包给手机端。</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" id="pick-import">导入手机包</button>
+        <button class="btn soft" id="export-package">导出给手机</button>
+        <input class="hidden" id="import-file" type="file" accept=".zip,application/zip" />
+      </div>
+    </header>
+    <section class="card project-card">
+      <strong>同步说明</strong>
+      <div class="warn">导入前会自动备份电脑端数据库。第一版使用完整 zip 包同步。</div>
+    </section>
+    <h2>最近记录</h2>
+    <section class="project-grid">${logs}</section>
+  `);
+}
+
+function render() {
+  app.innerHTML = state.page === "projects" ? projectsPage()
+    : state.page === "project" ? projectPage()
+    : state.page === "sample" ? samplePage()
+    : syncPage();
+  bind();
+}
+
+function bind() {
+  app.querySelectorAll("[data-nav]").forEach((button) => {
+    button.addEventListener("click", () => button.dataset.nav === "sync" ? showSync() : showProjects());
+  });
+  app.querySelectorAll("[data-project]").forEach((button) => {
+    button.addEventListener("click", () => showProject(button.dataset.project));
+  });
+  app.querySelectorAll("[data-sample]").forEach((button) => {
+    button.addEventListener("click", () => showSample(button.dataset.sample));
+  });
+  app.querySelectorAll("[data-action='back-projects']").forEach((button) => button.addEventListener("click", showProjects));
+  app.querySelectorAll("[data-action='back-project']").forEach((button) => button.addEventListener("click", () => showProject(state.sample.projectId)));
+
+  const search = app.querySelector("#search");
+  if (search) {
+    search.addEventListener("change", async () => {
+      state.q = search.value.trim();
+      state.page === "project" ? await showProject(state.project.id) : await showProjects();
+    });
+  }
+
+  const sampleForm = app.querySelector("#sample-form");
+  if (sampleForm) sampleForm.addEventListener("submit", saveSample);
+
+  const newProject = app.querySelector("#new-project");
+  if (newProject) newProject.addEventListener("click", createProject);
+
+  const editProject = app.querySelector("#edit-project");
+  if (editProject) editProject.addEventListener("click", updateProject);
+
+  const pickImport = app.querySelector("#pick-import");
+  const importFile = app.querySelector("#import-file");
+  if (pickImport && importFile) {
+    pickImport.addEventListener("click", () => importFile.click());
+    importFile.addEventListener("change", importPackage);
+  }
+
+  const exportPackage = app.querySelector("#export-package");
+  if (exportPackage) exportPackage.addEventListener("click", () => {
+    window.location.href = "/api/export";
+  });
+}
+
+async function saveSample(event) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  await api(`/api/samples/${encodeURIComponent(state.sample.id)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(Object.fromEntries(data.entries())),
+  });
+  state.message = "样品内容已保存";
+  await showProject(state.sample.projectId);
+}
+
+async function createProject() {
+  const name = prompt("项目名称");
+  if (!name) return;
+  await api("/api/projects", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  state.message = "项目已创建";
+  await showProjects();
+}
+
+async function updateProject() {
+  const name = prompt("项目名称", state.project.name);
+  if (!name) return;
+  await api(`/api/projects/${encodeURIComponent(state.project.id)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  state.message = "项目内容已调整";
+  await showProject(state.project.id);
+}
+
+async function importPackage(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    await api("/api/import", {
+      method: "POST",
+      headers: { "content-type": "application/zip" },
+      body: await file.arrayBuffer(),
+    });
+    state.message = "手机包导入完成";
+    await showSync();
+  } catch (error) {
+    state.message = `导入失败：${error.message}`;
+    render();
+  } finally {
+    event.target.value = "";
+  }
+}
+
+showProjects().catch((error) => {
+  app.innerHTML = `<main class="main"><div class="warn">启动失败：${escapeHtml(error.message)}</div></main>`;
+});
