@@ -1,5 +1,7 @@
 (function () {
-  const DB_NAME = "sample-mobile-db";
+  const APP_ENV = "dev";
+  const APP_NAME = "样品采集 Dev";
+  const DB_NAME = "sample-mobile-db-dev";
   const DB_VERSION = 1;
   const DEVICE = "mobile";
   const app = document.querySelector("#app");
@@ -123,7 +125,7 @@
 
   function homePage() {
     const pending = state.samples.filter((s) => s.updatedByDevice === DEVICE).length;
-    return pageShell("样品采集", "个人本地使用 · 数据包同步", `
+    return pageShell(APP_NAME, "开发环境 · 个人本地使用 · 数据包同步", `
       <section class="home-actions">
         <button class="hero-button primary" data-go="entry">
           <strong>录入</strong>
@@ -400,6 +402,7 @@
     const manifest = {
       packageId: id("PKG"),
       packageType: "mobile_to_desktop",
+      appEnv: APP_ENV,
       sourceDevice: DEVICE,
       exportedAt: now(),
       schemaVersion: 1,
@@ -415,7 +418,7 @@
       files[`images/${sample.id}.jpg`] = dataUrlToBytes(sample.photoData);
     }
     const zip = makeZip(files);
-    const fileName = `sample_sync_${formatStamp(new Date())}.zip`;
+    const fileName = `sample_sync_${APP_ENV}_${formatStamp(new Date())}.zip`;
     await saveBlob(zip, fileName);
   }
 
@@ -425,8 +428,12 @@
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const files = file.name.endsWith(".json")
-        ? { "package.json": new TextDecoder().decode(bytes) }
+        ? { "package.json": decodeText(bytes) }
         : readZip(bytes);
+      const manifest = JSON.parse(files["manifest.json"] || "{}");
+      if (manifest.appEnv && manifest.appEnv !== APP_ENV && !confirm(`这是 ${manifest.appEnv} 环境的数据包，当前是 ${APP_ENV} 环境，是否继续导入？`)) {
+        return;
+      }
       const projects = JSON.parse(files["projects.json"] || "[]");
       const samplesRaw = JSON.parse(files["samples.json"] || "[]");
       const samples = samplesRaw.map((sample) => {
@@ -580,10 +587,15 @@
       const dataStart = nameStart + nameLen + extraLen;
       const name = decoder.decode(bytes.slice(nameStart, nameStart + nameLen));
       const data = bytes.slice(dataStart, dataStart + size);
-      files[name] = name.endsWith(".json") ? decoder.decode(data) : data;
+      files[name] = name.endsWith(".json") ? decodeText(data) : data;
       pos = dataStart + size;
     }
     return files;
+  }
+
+  function decodeText(bytes) {
+    const text = new TextDecoder().decode(bytes);
+    return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
   }
 
   async function init() {

@@ -5,7 +5,8 @@ dist/
 build/
 __pycache__/
 *.pyc
-desktop/app/data/
+dev/desktop/app/data/
+dev/desktop/app/data-dev/
 *.log
 *.tmp
 Thumbs.db

@@ -1,6 +1,6 @@
 {
-  "name": "样品采集",
-  "short_name": "样品采集",
+  "name": "样品采集 Dev",
+  "short_name": "样品采集 Dev",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f8fafc",

@@ -2,6 +2,7 @@ const app = document.querySelector("#app");
 
 const state = {
   page: "projects",
+  env: null,
   projects: [],
   project: null,
   samples: [],
@@ -9,6 +10,7 @@ const state = {
   logs: [],
   q: "",
   message: "",
+  modal: null,
 };
 
 async function api(path, options = {}) {
@@ -36,8 +38,8 @@ function layout(body) {
   return `
     <div class="layout">
       <aside class="sidebar">
-        <div class="brand">样品管理</div>
-        <div class="brand-sub">本地整理 · 数据包同步</div>
+        <div class="brand">${escapeHtml(state.env?.appName || "样品管理")}</div>
+        <div class="brand-sub">${escapeHtml(state.env?.appEnv || "dev")} · 本地整理 · 数据包同步</div>
         <nav class="nav">
           <button class="${state.page !== "sync" ? "active" : ""}" data-nav="projects">项目</button>
           <button class="${state.page === "sync" ? "active" : ""}" data-nav="sync">导入导出</button>
@@ -52,11 +54,46 @@ function layout(body) {
         ${state.message ? `<div class="notice">${escapeHtml(state.message)}</div>` : ""}
         ${body}
       </main>
+      ${modalHtml()}
     </div>
   `;
 }
 
+function modalHtml() {
+  if (!state.modal) return "";
+  if (state.modal.type === "project") {
+    const project = state.modal.project || {};
+    const title = project.id ? "调整项目" : "新建项目";
+    return `
+      <div class="modal-mask">
+        <form class="modal card" id="project-form">
+          <div class="modal-head">
+            <h2>${title}</h2>
+            <button class="icon-btn" type="button" data-action="close-modal">×</button>
+          </div>
+          <div class="form">
+            <div class="field"><label>项目名称</label><input name="name" required value="${escapeHtml(project.name || "")}" /></div>
+            <div class="grid-2">
+              <div class="field"><label>客户名称</label><input name="customer" value="${escapeHtml(project.customer || "")}" /></div>
+              <div class="field"><label>状态</label><select name="status">
+                ${["进行中", "待整理", "已完成", "已归档"].map((status) => `<option ${project.status === status ? "selected" : ""}>${status}</option>`).join("")}
+              </select></div>
+            </div>
+            <div class="field"><label>备注</label><textarea name="remark">${escapeHtml(project.remark || "")}</textarea></div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" data-action="close-modal">取消</button>
+            <button class="btn primary" type="submit">保存</button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+  return "";
+}
+
 async function loadProjects() {
+  if (!state.env) state.env = await api("/api/env");
   state.projects = await api(`/api/projects?q=${encodeURIComponent(state.q)}`);
 }
 
@@ -133,6 +170,7 @@ function projectPage() {
       <div class="toolbar">
         <input class="search" id="search" value="${escapeHtml(state.q)}" placeholder="搜索当前项目内样品" />
         <button class="btn soft" id="edit-project">调整项目</button>
+        <button class="btn" id="export-excel">导出Excel</button>
         <button class="btn" id="export-package">导出同步包</button>
       </div>
     </header>
@@ -194,7 +232,7 @@ function syncPage() {
     </header>
     <section class="card project-card">
       <strong>同步说明</strong>
-      <div class="warn">导入前会自动备份电脑端数据库。第一版使用完整 zip 包同步。</div>
+      <div class="warn">当前环境：${escapeHtml(state.env?.appEnv || "dev")}。导入前会自动备份电脑端数据库。第一版使用完整 zip 包同步。</div>
     </section>
     <h2>最近记录</h2>
     <section class="project-grid">${logs}</section>
@@ -233,11 +271,27 @@ function bind() {
   const sampleForm = app.querySelector("#sample-form");
   if (sampleForm) sampleForm.addEventListener("submit", saveSample);
 
+  const projectForm = app.querySelector("#project-form");
+  if (projectForm) projectForm.addEventListener("submit", saveProject);
+
+  app.querySelectorAll("[data-action='close-modal']").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.modal = null;
+      render();
+    });
+  });
+
   const newProject = app.querySelector("#new-project");
-  if (newProject) newProject.addEventListener("click", createProject);
+  if (newProject) newProject.addEventListener("click", () => {
+    state.modal = { type: "project", project: {} };
+    render();
+  });
 
   const editProject = app.querySelector("#edit-project");
-  if (editProject) editProject.addEventListener("click", updateProject);
+  if (editProject) editProject.addEventListener("click", () => {
+    state.modal = { type: "project", project: state.project };
+    render();
+  });
 
   const pickImport = app.querySelector("#pick-import");
   const importFile = app.querySelector("#import-file");
@@ -249,6 +303,11 @@ function bind() {
   const exportPackage = app.querySelector("#export-package");
   if (exportPackage) exportPackage.addEventListener("click", () => {
     window.location.href = "/api/export";
+  });
+
+  const exportExcel = app.querySelector("#export-excel");
+  if (exportExcel) exportExcel.addEventListener("click", () => {
+    if (state.project?.id) window.location.href = `/api/projects/${encodeURIComponent(state.project.id)}/export-excel`;
   });
 }
 
@@ -264,28 +323,29 @@ async function saveSample(event) {
   await showProject(state.sample.projectId);
 }
 
-async function createProject() {
-  const name = prompt("项目名称");
-  if (!name) return;
-  await api("/api/projects", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ name }),
-  });
-  state.message = "项目已创建";
-  await showProjects();
-}
-
-async function updateProject() {
-  const name = prompt("项目名称", state.project.name);
-  if (!name) return;
-  await api(`/api/projects/${encodeURIComponent(state.project.id)}`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ name }),
-  });
-  state.message = "项目内容已调整";
-  await showProject(state.project.id);
+async function saveProject(event) {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+  const project = state.modal?.project || {};
+  if (project.id) {
+    await api(`/api/projects/${encodeURIComponent(project.id)}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    state.message = "项目内容已调整";
+    state.modal = null;
+    await showProject(project.id);
+  } else {
+    await api("/api/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    state.message = "项目已创建";
+    state.modal = null;
+    await showProjects();
+  }
 }
 
 async function importPackage(event) {

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import os
+import html
 import shutil
 import sqlite3
 import sys
@@ -16,7 +18,9 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
-DATA_DIR = ROOT / "data"
+APP_ENV = os.environ.get("SMANAGE_ENV", "dev").strip() or "dev"
+APP_NAME = "样品管理 Dev" if APP_ENV == "dev" else "样品管理"
+DATA_DIR = ROOT / ("data-dev" if APP_ENV == "dev" else "data")
 DB_PATH = DATA_DIR / "samples.db"
 IMAGE_DIR = DATA_DIR / "images"
 BACKUP_DIR = DATA_DIR / "backups"
@@ -246,6 +250,10 @@ def import_package(package_bytes: bytes) -> dict:
     backup_db()
     counts = {"projects_created": 0, "projects_updated": 0, "samples_created": 0, "samples_updated": 0, "skipped": 0}
     with zipfile.ZipFile(BytesReader(package_bytes)) as zf, db() as conn:
+        manifest = json.loads(zf.read("manifest.json").decode("utf-8-sig")) if "manifest.json" in zf.namelist() else {}
+        package_env = manifest.get("appEnv") or "unknown"
+        if APP_ENV == "production" and package_env == "dev":
+            raise ValueError("正式环境不能直接导入 dev 数据包")
         projects = json.loads(zf.read("projects.json").decode("utf-8-sig")) if "projects.json" in zf.namelist() else []
         samples = json.loads(zf.read("samples.json").decode("utf-8-sig")) if "samples.json" in zf.namelist() else []
         for project in projects:
@@ -263,6 +271,7 @@ def import_package(package_bytes: bytes) -> dict:
                     break
             result = upsert_sample(conn, sample, photo_file)
             increment(counts, "samples", result)
+        counts["app_env"] = package_env
         conn.execute("insert into sync_logs (action, summary, created_at) values (?, ?, ?)", ("import", json.dumps(counts, ensure_ascii=False), utc_now()))
     return counts
 
@@ -306,13 +315,15 @@ class BytesReader:
 
 def export_package() -> Path:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    path = EXPORT_DIR / f"sample_sync_desktop_{stamp}.zip"
+    env_part = "dev_" if APP_ENV == "dev" else ""
+    path = EXPORT_DIR / f"sample_sync_{env_part}desktop_{stamp}.zip"
     with db() as conn, zipfile.ZipFile(path, "w", compression=zipfile.ZIP_STORED) as zf:
         projects = [row_to_project(row) for row in conn.execute("select * from projects where deleted = 0 order by updated_at desc")]
         samples = [row_to_sample(row) for row in conn.execute("select * from samples where deleted = 0 order by updated_at desc")]
         manifest = {
             "packageId": f"PKG-{stamp}-desktop",
             "packageType": "desktop_to_mobile",
+            "appEnv": APP_ENV,
             "sourceDevice": "desktop",
             "exportedAt": utc_now(),
             "schemaVersion": 1,
@@ -330,6 +341,83 @@ def export_package() -> Path:
     return path
 
 
+def export_project_excel(project_id: str) -> Path:
+    project = get_project(project_id)
+    if not project:
+        raise ValueError("project not found")
+    samples = project_samples(project_id, "")
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_project = "".join(ch for ch in project["name"] if ch.isalnum() or ch in ("-", "_")) or project_id
+    path = EXPORT_DIR / f"{safe_project}_{stamp}.xlsx"
+    headers = ["图片名称", "规格", "产地", "价格", "状态", "备注", "更新时间"]
+    rows = [
+        [
+            sample.get("name", ""),
+            sample.get("spec", ""),
+            sample.get("origin", ""),
+            sample.get("price", ""),
+            sample.get("status", ""),
+            sample.get("remark", ""),
+            sample.get("updatedAt", ""),
+        ]
+        for sample in samples
+    ]
+    write_simple_xlsx(path, project["name"], headers, rows)
+    with db() as conn:
+        conn.execute("insert into sync_logs (action, summary, created_at) values (?, ?, ?)", ("export_excel", path.name, utc_now()))
+    return path
+
+
+def write_simple_xlsx(path: Path, sheet_name: str, headers: list[str], rows: list[list]) -> None:
+    sheet = safe_sheet_name(sheet_name)
+    values = [headers, *rows]
+    sheet_rows = []
+    for row_index, row in enumerate(values, start=1):
+        cells = []
+        for col_index, value in enumerate(row, start=1):
+            ref = f"{column_name(col_index)}{row_index}"
+            text = html.escape(str(value if value is not None else ""))
+            cells.append(f'<c r="{ref}" t="inlineStr"><is><t>{text}</t></is></c>')
+        sheet_rows.append(f'<row r="{row_index}">{"".join(cells)}</row>')
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+</Types>""")
+        zf.writestr("_rels/.rels", """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>""")
+        zf.writestr("xl/_rels/workbook.xml.rels", """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+</Relationships>""")
+        zf.writestr("xl/workbook.xml", f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets><sheet name="{html.escape(sheet)}" sheetId="1" r:id="rId1"/></sheets>
+</workbook>""")
+        zf.writestr("xl/worksheets/sheet1.xml", f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<sheetData>{"".join(sheet_rows)}</sheetData>
+</worksheet>""")
+
+
+def safe_sheet_name(name: str) -> str:
+    cleaned = "".join(ch for ch in name if ch not in '[]:*?/\\')[:31]
+    return cleaned or "样品"
+
+
+def column_name(index: int) -> str:
+    name = ""
+    while index:
+        index, remainder = divmod(index - 1, 26)
+        name = chr(65 + remainder) + name
+    return name
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
@@ -345,6 +433,13 @@ class Handler(BaseHTTPRequestHandler):
         elif path.startswith("/api/projects/") and path.endswith("/samples"):
             project_id = unquote(path.split("/")[3])
             self.json(project_samples(project_id, parsed.query))
+        elif path.startswith("/api/projects/") and path.endswith("/export-excel"):
+            project_id = unquote(path.split("/")[3])
+            try:
+                export_path = export_project_excel(project_id)
+                self.serve_download(export_path, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            except Exception as exc:
+                self.json({"error": str(exc)}, status=404)
         elif path.startswith("/api/projects/"):
             project_id = unquote(path.split("/")[3])
             project = get_project(project_id)
@@ -355,9 +450,11 @@ class Handler(BaseHTTPRequestHandler):
             self.json(sample or {}, status=200 if sample else 404)
         elif path == "/api/export":
             export_path = export_package()
-            self.serve_download(export_path)
+            self.serve_download(export_path, "application/zip")
         elif path == "/api/logs":
             self.json(sync_logs())
+        elif path == "/api/env":
+            self.json({"appEnv": APP_ENV, "appName": APP_NAME, "dataDir": str(DATA_DIR)})
         else:
             self.send_error(404)
 
@@ -449,10 +546,10 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def serve_download(self, path: Path) -> None:
+    def serve_download(self, path: Path, content_type: str) -> None:
         data = path.read_bytes()
         self.send_response(200)
-        self.send_header("content-type", "application/zip")
+        self.send_header("content-type", content_type)
         self.send_header("content-disposition", f'attachment; filename="{path.name}"')
         self.send_header("content-length", str(len(data)))
         self.end_headers()
@@ -533,5 +630,6 @@ def main() -> None:
     url = f"http://{HOST}:{PORT}/"
     if "--no-browser" not in sys.argv:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
-    print(f"样品管理电脑端已启动: {url}")
+    print(f"{APP_NAME} 已启动: {url}")
+    print(f"环境: {APP_ENV}; 数据目录: {DATA_DIR}")
     server.serve_forever()
