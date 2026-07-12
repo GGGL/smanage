@@ -1,5 +1,6 @@
 .agents/
 .codex/
+.tools/
 node_modules/
 dist/
 build/
@@ -9,5 +10,7 @@ dev/desktop/app/data/
 dev/desktop/app/data-dev/
 *.log
 *.tmp
+*.lnk
+*.keystore
 Thumbs.db
 .DS_Store

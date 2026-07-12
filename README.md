@@ -7,7 +7,7 @@
 - 手机端：纯 Web 应用原型已可用，位于 `dev/mobile/`。
 - 电脑端：Python 本地 Web 管理程序已可用，位于 `dev/desktop/`。
 - 正式版电脑端 exe：已生成，位于 `release/正式版/打开桌面端.exe`。
-- 正式版 APK：未生成，原因是当前电脑没有 JDK、Android SDK、Gradle/Android 打包环境。
+- 正式版 APK：已生成，位于 `release/正式版/手机端.apk`。
 - 数据同步：通过 zip 包双向同步，已实现手机导出、手机导入确认、电脑导入、电脑导出。
 
 ## 目录结构
@@ -21,6 +21,7 @@ smanage/
   release/
     正式版/
       打开桌面端.exe
+      手机端.apk
       数据包/
         手机导出给电脑/
         电脑导出给手机/

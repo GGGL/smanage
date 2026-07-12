@@ -160,10 +160,15 @@
     const projectSelectOptions = projectOptions || `<option value="">暂无已有项目</option>`;
     return pageShell("录入样品", "这条路径只负责新增采集", `
       <form class="form" id="entry-form">
-        <label class="photo-picker" id="photo-picker">
-          <input name="photo" type="file" accept="image/*" capture="environment" />
-          <div class="photo-empty"><b>拍照 / 选择图片</b><span>现场先拍图，再补充信息</span></div>
-        </label>
+        <div class="photo-picker" id="photo-picker">
+          <div class="photo-empty"><b>照片</b><span>可拍照或选择手机内照片</span></div>
+          <div class="photo-actions">
+            <label class="photo-action primary" for="photo-camera">拍照</label>
+            <label class="photo-action" for="photo-gallery">选择手机内照片</label>
+          </div>
+          <input class="hidden-file" id="photo-camera" type="file" accept="image/*" capture="environment" />
+          <input class="hidden-file" id="photo-gallery" type="file" accept="image/*" />
+        </div>
         <div class="field">
           <label>图片名称</label>
           <input name="name" required placeholder="例如：前壳样品" />
@@ -428,16 +433,18 @@
   }
 
   function bindEntryForm(form) {
-    const photoInput = form.elements.photo;
+    const cameraInput = app.querySelector("#photo-camera");
+    const galleryInput = app.querySelector("#photo-gallery");
     form.dataset.photoData = form.dataset.photoData || "";
-    photoInput.addEventListener("change", async () => {
-      const file = photoInput.files?.[0];
+    const selectPhoto = async (input) => {
+      const file = input.files?.[0];
       if (!file) return;
-      form.dataset.photoData = await fileToDataUrl(file);
-      const picker = app.querySelector("#photo-picker");
-      picker.innerHTML = `<input name="photo" type="file" accept="image/*" capture="environment" /><img src="${form.dataset.photoData}" alt="" />`;
-      bindEntryForm(form);
-    });
+      form.dataset.photoData = await imageFileToCompressedDataUrl(file);
+      input.value = "";
+      updatePhotoPicker(form.dataset.photoData);
+    };
+    if (cameraInput) cameraInput.addEventListener("change", () => selectPhoto(cameraInput));
+    if (galleryInput) galleryInput.addEventListener("change", () => selectPhoto(galleryInput));
     if (form.dataset.submitBound) return;
     form.dataset.submitBound = "1";
     form.addEventListener("submit", async (event) => {
@@ -527,12 +534,48 @@
     });
   }
 
+  function updatePhotoPicker(photoData) {
+    const picker = app.querySelector("#photo-picker");
+    if (!picker) return;
+    const preview = picker.querySelector(".photo-empty");
+    if (!preview) return;
+    preview.innerHTML = photoData
+      ? `<img src="${photoData}" alt="" />`
+      : `<b>照片</b><span>可拍照或选择手机内照片</span>`;
+  }
+
   function fileToDataUrl(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
       reader.onerror = () => reject(reader.error);
       reader.readAsDataURL(file);
+    });
+  }
+
+  async function imageFileToCompressedDataUrl(file) {
+    const originalDataUrl = await fileToDataUrl(file);
+    if (!file.type.startsWith("image/")) return originalDataUrl;
+
+    const image = await loadImage(originalDataUrl);
+    const maxSide = 1600;
+    const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    context.drawImage(image, 0, 0, width, height);
+    return canvas.toDataURL("image/jpeg", 0.82);
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("图片读取失败"));
+      image.src = src;
     });
   }
 

@@ -13,7 +13,7 @@
 ## 当前目录
 
 ```text
-G:\20260515\smanage
+G:\20260513\smanage
 ```
 
 主要结构：
@@ -251,3 +251,230 @@ release/正式版/手机端.apk
 - 电脑端 production 数据目录和正式 exe 打包逻辑。
 - 正式版目录结构和说明。
 - 新增本交接文件。
+
+## 2026-07-11 本次会话记录
+
+用户要求：
+
+- `README.md` 记录项目状态。
+- `TODO.md` 记录待办。
+- 每次结束前让 Codex 生成 `SESSION_SUMMARY.md`。
+- 继续前先读取这些文件。
+- 本次先不用开发代码。
+
+本次已完成：
+
+- 已读取 `README.md`。
+- 已读取 `TODO.md`。
+- 已读取并更新 `SESSION_SUMMARY.md`。
+- 未进行任何业务代码开发。
+
+环境备注：
+
+- 当时曾观察到仓库在 `G:\20260513\smanage\smanage`；截至 2026-07-12，实际仓库目录已是 `G:\20260513\smanage`。
+- 当前环境中直接运行 `rg.exe` 被拒绝访问，后续可用 PowerShell 原生命令替代查找。
+- PowerShell 读取中文文件时需要指定 UTF-8 输出/读取，否则会出现中文乱码。
+
+## 2026-07-12 APK 打包环境检查
+
+用户已手动安装 JDK 和 Android Studio，本轮只检查环境，不开始打包。
+
+检查结果：
+
+- 当前实际仓库目录是 `G:\20260513\smanage`。
+- Android SDK 已安装在 `C:\Users\shen\AppData\Local\Android\Sdk`。
+- `adb.exe` 可通过完整路径运行：`C:\Users\shen\AppData\Local\Android\Sdk\platform-tools\adb.exe`，版本为 `37.0.0-14910828`。
+- `sdkmanager.bat` 可在临时设置 `JAVA_HOME` 后运行，版本为 `21.0`。
+- 已安装 SDK 组件：
+  - `platform-tools 37.0.0`
+  - `cmdline-tools;latest 21.0`
+  - `platforms;android-36.1`
+  - `build-tools;36.1.0`
+  - `build-tools;37.0.0`
+  - `emulator 36.6.11`
+- Android SDK license 目录存在 `android-sdk-license`。
+- 系统 JDK 安装在 `D:\jdk21`，实际版本是 Temurin `25.0.3`。
+- Android Studio 安装在 `D:\Android Studio`，自带 JBR 路径为 `D:\Android Studio\jbr`，Java 版本是 `21.0.10`。后续 Android 构建建议优先使用这个 JBR 作为 `JAVA_HOME`。
+- Node 可用：`v22.11.0`。
+- `npm.cmd` 可用：`10.9.0`。PowerShell 里直接运行 `npm` 可能被执行策略拦截，应使用 `npm.cmd`。
+
+仍需处理：
+
+- Codex 当前进程没有继承用户新装后的 PATH，直接运行 `java`、`adb`、`sdkmanager` 会找不到；后续命令需要显式设置：
+
+```powershell
+$env:JAVA_HOME = "D:\Android Studio\jbr"
+$env:ANDROID_HOME = "C:\Users\shen\AppData\Local\Android\Sdk"
+$env:ANDROID_SDK_ROOT = "C:\Users\shen\AppData\Local\Android\Sdk"
+$env:Path = "$env:JAVA_HOME\bin;$env:ANDROID_HOME\platform-tools;$env:ANDROID_HOME\cmdline-tools\latest\bin;$env:Path"
+```
+
+- 当前项目还没有 `package.json`、`capacitor.config.*`、`android/`、`gradlew.bat`、`build.gradle` 等 Android/Capacitor 打包工程文件。
+- `dev/mobile/app.js` 当前仍是开发配置：
+  - `APP_ENV = "dev"`
+  - `APP_NAME = "样品采集 Dev"`
+  - `DB_NAME = "sample-mobile-db-dev"`
+- 正式 APK 打包前必须生成或配置 production 版本：
+  - `APP_ENV = "production"`
+  - `APP_NAME = "样品采集"`
+  - `DB_NAME = "sample-mobile-db"`
+  - 包名 `com.gggl.smanage`
+- 本地未发现可直接调用的 Gradle 或 Android Gradle Plugin 缓存；第一次真正构建 Android 工程时可能还需要联网下载 Gradle/AGP 依赖。
+- 上次中断下载留下 `.tools/` 目录，里面有 `android-commandlinetools.zip` 和 `jdk21.zip`，目前不影响项目，但后续可清理。
+
+## 2026-07-12 正式版 APK 已生成
+
+本轮已完成手机端正式版 APK 打包。
+
+输出文件：
+
+```text
+release/正式版/手机端.apk
+```
+
+新增打包工程：
+
+```text
+dev/mobile-android/
+  AndroidManifest.xml
+  build-apk.ps1
+  src/com/gggl/smanage/MainActivity.java
+  res/
+  smanage-release.keystore
+```
+
+实现方式：
+
+- 使用原生 Android WebView 包装 `dev/mobile` 静态 Web 应用。
+- 未使用 Gradle/Capacitor，直接调用 Android SDK 的 `aapt2`、`d8`、`zipalign`、`apksigner`。
+- 构建时复制 `dev/mobile` 到 `build/mobile-android/assets/www`，并只在构建副本中切换 production 配置，不改动 `dev/mobile/app.js`。
+
+正式 APK 配置：
+
+- 应用名：`样品采集`
+- 包名：`com.gggl.smanage`
+- `APP_ENV = "production"`
+- `APP_NAME = "样品采集"`
+- `DB_NAME = "sample-mobile-db"`
+- production 导出文件名：`sample_sync_时间.zip`，不带 `_dev_`
+
+验收结果：
+
+- APK 大小约 2.0 MB。
+- `apksigner verify --verbose` 通过。
+- `aapt dump badging` 确认包名 `com.gggl.smanage`，应用名 `样品采集`，`minSdkVersion 23`，`targetSdkVersion 36`。
+- `build/mobile-android/signed.apk` 与 `release/正式版/手机端.apk` 的 SHA256 相同：
+
+```text
+119587FDCC86A32A2F034E1B6B3A117F5F30F050382EF9A58C735A5337C8155B
+```
+
+后续重新打包命令：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File dev\mobile-android\build-apk.ps1
+```
+
+注意：
+
+- `dev/mobile-android/smanage-release.keystore` 是当前 APK 的签名密钥，后续升级安装需要继续使用同一个密钥。出于安全考虑，该文件保留在本机并通过 `.gitignore` 排除，不上传 GitHub。
+- Codex 当前进程仍未继承系统 PATH，脚本内已显式设置 `JAVA_HOME`、`ANDROID_HOME`、`ANDROID_SDK_ROOT`。
+- `.tools/` 目录是上次中断下载留下的临时工具包，不参与本次成功打包。
+
+## 2026-07-12 荣耀 Magic 7 Pro 拍照修复
+
+用户真机测试反馈：荣耀 Magic 7 Pro 安装 `release/正式版/手机端.apk` 后，点击“拍照录入”未能调用相机。
+
+原因判断：
+
+- 手机端页面使用 `<input type="file" accept="image/*" capture="environment">`。
+- Android WebView 包装层原来只调用 `WebChromeClient.FileChooserParams.createIntent()`。
+- 部分国产机/系统 WebView 不会把 `capture` 自动转换成相机 Intent，导致点击后不能直接调起相机。
+
+已修复：
+
+- 修改 `dev/mobile-android/src/com/gggl/smanage/MainActivity.java`。
+- 在 `onShowFileChooser` 中识别 `fileChooserParams.isCaptureEnabled()` 和 image accept 类型。
+- 显式创建 `MediaStore.ACTION_IMAGE_CAPTURE` Intent。
+- 使用 `MediaStore.Images.Media.EXTERNAL_CONTENT_URI` 预创建输出 Uri，并通过 `MediaStore.EXTRA_OUTPUT` 传给系统相机。
+- 拍照返回时，如果 WebView 默认解析结果为空，则回传预创建的 `cameraPhotoUri` 给网页 input。
+- 修改 `dev/mobile-android/AndroidManifest.xml`，增加可选相机 feature，不声明 `CAMERA` 权限，避免 Android 运行时权限未授权导致相机 Intent 失败。
+- APK 版本提升为 `versionCode=2`、`versionName=1.0.1`，方便覆盖安装测试。
+
+重新打包输出：
+
+```text
+release/正式版/手机端.apk
+```
+
+验收结果：
+
+- `apksigner verify --verbose` 通过。
+- `aapt dump badging` 确认：
+  - 包名：`com.gggl.smanage`
+  - 应用名：`样品采集`
+  - `versionCode=2`
+  - `versionName=1.0.1`
+  - `targetSdkVersion=36`
+  - `android.hardware.camera` 为 not required
+- 最终 APK SHA256：
+
+```text
+5A5ED775C21F9CB48E5C1476FA995B8442851AE5AB603DD74C74E649BA8A74C6
+```
+
+下一步：
+
+- 用户在荣耀 Magic 7 Pro 上覆盖安装新版 `手机端.apk`。
+- 重点测试“录入 -> 拍照 / 选择图片”是否能拉起系统相机并保存图片预览。
+
+## 2026-07-12 录入页拍照/相册交互源码调整
+
+用户继续真机测试反馈：录入页红框区域不应把“拍照 / 选择图片”混成一个动作。正确逻辑应该是：
+
+- 拍照
+- 选择手机内照片
+
+两个动作独立，点击拍照后仍应可以单独选择手机内照片。
+
+本轮先修改源码，随后用户要求生成新的 `手机端.apk`，已重新打包正式 APK。
+
+修改内容：
+
+- `dev/mobile/app.js`
+  - 录入页照片区域改为两个独立入口：
+    - `#photo-camera`：`type=file accept=image/* capture=environment`
+    - `#photo-gallery`：`type=file accept=image/*`
+  - 选择照片后只更新预览，不再重写整个 photo picker，避免事件和入口状态被破坏。
+  - 新增 `imageFileToCompressedDataUrl`，保存前统一压缩图片。
+  - 压缩规则：最长边 `1600px`，JPEG 质量 `0.82`。
+- `dev/mobile/styles.css`
+  - 新增 `.photo-actions` 和 `.photo-action` 样式，让两个入口并排显示。
+- `dev/mobile-android/src/com/gggl/smanage/MainActivity.java`
+  - Android WebView 文件选择逻辑改为：
+    - `capture=true` 时显式调用相机 Intent。
+    - 非 capture 的相册入口只走系统文件选择，不再混入相机 Intent。
+
+重新打包命令：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File dev\mobile-android\build-apk.ps1
+```
+
+本次新 APK：
+
+- 输出：`release/正式版/手机端.apk`
+- 包名：`com.gggl.smanage`
+- 应用名：`样品采集`
+- `versionCode=3`
+- `versionName=1.0.2`
+- `APP_ENV=production`
+- `DB_NAME=sample-mobile-db`
+- `apksigner verify --verbose` 通过
+- SHA256：
+
+```text
+ADFFE1C302B2A3E8AA5623EF64A96DE4D1B5A330559F8A07972C12E4DA71D8D2
+```
+
+下一步让用户在荣耀 Magic 7 Pro 上覆盖安装 `1.0.2`，测试“拍照”和“选择手机内照片”两个入口是否互不影响，以及图片压缩后的保存和导出是否正常。

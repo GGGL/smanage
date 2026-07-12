@@ -1,24 +1,30 @@
 # TODO
 
-## 最高优先级：正式打包 APK
+## 已完成：正式打包 APK
 
-当前电脑缺少 Android 打包环境，APK 未生成。下一台电脑继续时优先完成：
-
-1. 安装或确认 JDK 17/21。
-2. 安装或确认 Android Studio / Android SDK。
-3. 确认 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`。
-4. 确认可用 `sdkmanager`、`adb`、Gradle。
-5. 为 `dev/mobile` 创建正式 Android 打包工程。
-6. 使用 production 配置：
-   - 应用名：`样品采集`
-   - 包名：`com.gggl.smanage`
-   - 数据库：`sample-mobile-db`
-   - 导出文件名不要带 `_dev_`
-7. 生成真实可安装 APK。
-8. 输出到：
+正式版 APK 已生成：
 
 ```text
 release/正式版/手机端.apk
+```
+
+已确认：
+
+- 应用名：`样品采集`
+- 包名：`com.gggl.smanage`
+- 数据库：`sample-mobile-db`
+- 环境：`production`
+- 导出文件名不带 `_dev_`
+- APK 已通过 `apksigner verify`
+- 2026-07-12 已修复荣耀 Magic 7 Pro 真机上点击拍照录入未能调用相机的问题，当前 APK 版本为 `1.0.1`，`versionCode=2`。
+- 2026-07-12 已按真机反馈修改并重新打包：录入页“拍照”和“选择手机内照片”拆成两个独立动作，并加入图片压缩逻辑。当前 APK 版本为 `1.0.2`，`versionCode=3`。
+
+## 后续如需重新打包
+
+运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File dev\mobile-android\build-apk.ps1
 ```
 
 ## 手机端后续优化
@@ -43,7 +49,9 @@ release/正式版/手机端.apk
 ## 发布前检查
 
 - 确认 `release/正式版/打开桌面端.exe` 可运行。
-- 确认 `release/正式版/手机端.apk` 是真实 APK，不要放占位假文件。
+- 确认 `release/正式版/手机端.apk` 可安装运行。
+- 在荣耀 Magic 7 Pro 上覆盖安装 `1.0.1` 后，重新测试拍照录入能否拉起系统相机。
+- 在荣耀 Magic 7 Pro 上覆盖安装 `1.0.2` 后，测试“拍照”和“选择手机内照片”两个入口是否互不影响。
 - 用手机端采集 1 条样品，导出给电脑。
 - 电脑端导入、修改样品、导出给手机。
 - 手机端导入电脑同步包，确认数据更新。
