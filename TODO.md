@@ -29,6 +29,12 @@ powershell -ExecutionPolicy Bypass -File dev\mobile-android\build-apk.ps1
 
 ## 手机端后续优化
 
+- 正式版导出包交互改为方案 A：点击导出包文件名直接触发系统分享。
+  - 目标：用户导出后点击 `sample_sync_xxx.zip`，直接弹出系统分享面板。
+  - 分享用途：微信、文件传输助手、蓝牙、网盘、系统文件分享等方式传到电脑。
+  - 文案同步调整：不再提示 `dev/mobile/exports`，改为提示“分享到电脑后放入 `正式版/数据包/手机导出给电脑/`”。
+  - 当前电脑暂不开发：本机没有 Android/JDK/SDK 相关环境，晚点在有环境的电脑上实现并重新打包 APK。
+  - 技术建议：在 Android WebView 中增加原生分享桥接或下载处理，把 Blob/zip 保存到 App cache 后通过 `ACTION_SEND` + `FileProvider` 分享。
 - 当前手机端仍是静态 Web 实现，后续打 APK 推荐使用 Capacitor 或原生 WebView 容器。
 - 手机端导入电脑同步包已改为二段式：
   - 先选择同步包
