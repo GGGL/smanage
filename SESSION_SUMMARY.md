@@ -478,3 +478,53 @@ ADFFE1C302B2A3E8AA5623EF64A96DE4D1B5A330559F8A07972C12E4DA71D8D2
 ```
 
 下一步让用户在荣耀 Magic 7 Pro 上覆盖安装 `1.0.2`，测试“拍照”和“选择手机内照片”两个入口是否互不影响，以及图片压缩后的保存和导出是否正常。
+
+## 2026-07-16 导出包系统分享方案 A
+
+本轮实现正式版导出包交互方案 A：用户导出后点击 `sample_sync_xxx.zip` 文件名，直接触发 Android 系统分享面板。
+
+修改内容：
+
+- `dev/mobile/app.js`
+  - 同步中心导出结果从“下载导出包”文案改为只显示文件名。
+  - 点击文件名时优先调用 `window.SmanageAndroid.shareZipBase64(fileName, base64)`。
+  - 浏览器环境保留 Web Share API / 下载链接兜底。
+  - 文案改为“导出包已生成。点击文件名分享到电脑，再放入 正式版/数据包/手机导出给电脑/。”
+- `dev/mobile-android/src/com/gggl/smanage/MainActivity.java`
+  - 增加 `SmanageAndroid` JavaScript bridge。
+  - `shareZipBase64` 将 zip base64 写入 App cache 的 `share/` 目录。
+  - 通过 `ACTION_SEND` + `EXTRA_STREAM` 调起系统分享面板。
+  - 分享启动切回 UI 线程执行，兼容不同 WebView 线程行为。
+- `dev/mobile-android/src/com/gggl/smanage/ShareFileProvider.java`
+  - 新增轻量 `ContentProvider`，向微信、文件传输助手、蓝牙、网盘等分享目标暴露 cache 中的 zip 文件。
+- `dev/mobile-android/AndroidManifest.xml`
+  - 注册 `.ShareFileProvider`，authority 为 `com.gggl.smanage.share`。
+- `dev/mobile-android/build-apk.ps1`
+  - APK 版本提升为 `versionCode=4`、`versionName=1.0.3`。
+
+重新打包输出：
+
+```text
+release/正式版/手机端.apk
+```
+
+验收结果：
+
+- `apksigner verify --verbose` 通过。
+- `aapt dump badging` 确认：
+  - 包名：`com.gggl.smanage`
+  - 应用名：`样品采集`
+  - `versionCode=4`
+  - `versionName=1.0.3`
+  - `targetSdkVersion=36`
+- 最终 APK SHA256：
+
+```text
+40DD0B205462FC61A3324DADE05A116384C8B1973BF64E817758E8C10A3D3204
+```
+
+下一步：
+
+- 用户在荣耀 Magic 7 Pro 上覆盖安装 `1.0.3`。
+- 测试路径：同步中心 -> 导出给电脑 -> 点击 `sample_sync_xxx.zip` 文件名 -> 是否弹出系统分享面板。
+- 分享到电脑后，将 zip 放入 `release/正式版/数据包/手机导出给电脑/`，再用电脑端导入。

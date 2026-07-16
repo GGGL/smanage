@@ -18,6 +18,7 @@ release/正式版/手机端.apk
 - APK 已通过 `apksigner verify`
 - 2026-07-12 已修复荣耀 Magic 7 Pro 真机上点击拍照录入未能调用相机的问题，当前 APK 版本为 `1.0.1`，`versionCode=2`。
 - 2026-07-12 已按真机反馈修改并重新打包：录入页“拍照”和“选择手机内照片”拆成两个独立动作，并加入图片压缩逻辑。当前 APK 版本为 `1.0.2`，`versionCode=3`。
+- 2026-07-16 已实现正式版导出包交互方案 A：导出后点击 `sample_sync_xxx.zip` 文件名直接触发系统分享。当前 APK 版本为 `1.0.3`，`versionCode=4`。
 
 ## 后续如需重新打包
 
@@ -29,12 +30,7 @@ powershell -ExecutionPolicy Bypass -File dev\mobile-android\build-apk.ps1
 
 ## 手机端后续优化
 
-- 正式版导出包交互改为方案 A：点击导出包文件名直接触发系统分享。
-  - 目标：用户导出后点击 `sample_sync_xxx.zip`，直接弹出系统分享面板。
-  - 分享用途：微信、文件传输助手、蓝牙、网盘、系统文件分享等方式传到电脑。
-  - 文案同步调整：不再提示 `dev/mobile/exports`，改为提示“分享到电脑后放入 `正式版/数据包/手机导出给电脑/`”。
-  - 当前电脑暂不开发：本机没有 Android/JDK/SDK 相关环境，晚点在有环境的电脑上实现并重新打包 APK。
-  - 技术建议：在 Android WebView 中增加原生分享桥接或下载处理，把 Blob/zip 保存到 App cache 后通过 `ACTION_SEND` + `FileProvider` 分享。
+- 正式版导出包交互方案 A 已完成：点击导出包文件名直接触发系统分享。
 - 当前手机端仍是静态 Web 实现，后续打 APK 推荐使用 Capacitor 或原生 WebView 容器。
 - 手机端导入电脑同步包已改为二段式：
   - 先选择同步包
@@ -58,6 +54,7 @@ powershell -ExecutionPolicy Bypass -File dev\mobile-android\build-apk.ps1
 - 确认 `release/正式版/手机端.apk` 可安装运行。
 - 在荣耀 Magic 7 Pro 上覆盖安装 `1.0.1` 后，重新测试拍照录入能否拉起系统相机。
 - 在荣耀 Magic 7 Pro 上覆盖安装 `1.0.2` 后，测试“拍照”和“选择手机内照片”两个入口是否互不影响。
+- 在荣耀 Magic 7 Pro 上覆盖安装 `1.0.3` 后，测试导出后点击 `sample_sync_xxx.zip` 是否弹出系统分享面板。
 - 用手机端采集 1 条样品，导出给电脑。
 - 电脑端导入、修改样品、导出给手机。
 - 手机端导入电脑同步包，确认数据更新。

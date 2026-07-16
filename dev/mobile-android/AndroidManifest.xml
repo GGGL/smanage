@@ -11,6 +11,12 @@
         android:resizeableActivity="true"
         android:allowBackup="true"
         android:supportsRtl="true">
+        <provider
+            android:name=".ShareFileProvider"
+            android:authorities="com.gggl.smanage.share"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

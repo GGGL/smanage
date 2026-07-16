@@ -354,15 +354,15 @@
         </div>
         <button class="btn primary" id="export-package">导出给电脑</button>
         ${state.exportFile ? `
-          <a class="download-link" href="${state.exportFile.url}" download="${escapeHtml(state.exportFile.name)}">
-            下载导出包：${escapeHtml(state.exportFile.name)}
+          <a class="download-link" id="share-export" href="${state.exportFile.url}" download="${escapeHtml(state.exportFile.name)}">
+            ${escapeHtml(state.exportFile.name)}
           </a>
-          <div class="success">导出包已生成。浏览器下载后，可手动放到 dev/mobile/exports 目录归档。</div>
+          <div class="success">导出包已生成。点击文件名分享到电脑，再放入 正式版/数据包/手机导出给电脑/。</div>
         ` : ""}
         <label class="btn soft file-btn" for="import-file">选择电脑同步包</label>
         <input class="hidden-file" id="import-file" type="file" accept=".zip,.json,application/zip,application/json" />
         ${importInfo}
-        <div class="notice">第一版使用完整数据包双向同步；开发预览不能自动写入项目文件夹，导出包会通过浏览器下载。</div>
+        <div class="notice">第一版使用完整数据包双向同步；导出后点击文件名，通过系统分享发送到电脑。</div>
       </section>
     `, "home");
   }
@@ -410,6 +410,9 @@
 
     const exportButton = app.querySelector("#export-package");
     if (exportButton) exportButton.addEventListener("click", exportPackage);
+
+    const shareExport = app.querySelector("#share-export");
+    if (shareExport) shareExport.addEventListener("click", shareExportPackage);
 
     const importFile = app.querySelector("#import-file");
     if (importFile) {
@@ -687,20 +690,42 @@
   async function saveBlob(blob, fileName) {
     if (state.exportFile?.url) URL.revokeObjectURL(state.exportFile.url);
     const url = URL.createObjectURL(blob);
-    state.exportFile = { name: fileName, url };
-    const file = new File([blob], fileName, { type: "application/zip" });
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    state.exportFile = { name: fileName, url, bytes };
+  }
+
+  async function shareExportPackage(event) {
+    if (!state.exportFile) return;
+    if (window.SmanageAndroid?.shareZipBase64) {
+      event.preventDefault();
       try {
-        await navigator.share({ files: [file], title: "样品同步包" });
+        window.SmanageAndroid.shareZipBase64(state.exportFile.name, bytesToBase64(state.exportFile.bytes));
+        state.message = "已打开系统分享，请选择发送方式";
+        state.messageType = "success";
+        render();
         return;
       } catch (error) {
-        // Keep the download link visible when system sharing is cancelled or unavailable.
+        state.message = `分享失败：${error.message || error}`;
+        state.messageType = "error";
+        render();
+        return;
       }
     }
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
+
+    const file = new File([state.exportFile.bytes], state.exportFile.name, { type: "application/zip" });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      event.preventDefault();
+      await navigator.share({ files: [file], title: "样品同步包" });
+    }
+  }
+
+  function bytesToBase64(bytes) {
+    let bin = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      bin += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(bin);
   }
 
   function dataUrlToBytes(dataUrl) {
